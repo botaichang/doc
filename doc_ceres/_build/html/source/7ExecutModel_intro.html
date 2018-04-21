@@ -1,0 +1,358 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>7_理解基本的CUDA执行模型-CUDA Execution Model &mdash; cuda 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="cuda 1.0 documentation" href="../index.html"/>
+        <link rel="next" title="8_Understanding_the_nature_of_WARP" href="8Warp.html"/>
+        <link rel="prev" title="6_TimingYourKernel测试你的kernel性能" href="6timeingYourKernel.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> cuda
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="1helloworld.html">1_Helloword</a></li>
+<li class="toctree-l1"><a class="reference internal" href="2gridBlock.html">2_GridBlock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="3checkDimension.html">3_CheckDimension从Host,Device端访问维度</a></li>
+<li class="toctree-l1"><a class="reference internal" href="4checkThreadIdx.html">4_CheckThreadIdx</a></li>
+<li class="toctree-l1"><a class="reference internal" href="5checkYourCudaResults.html">5_CheckYourCudaResults</a></li>
+<li class="toctree-l1"><a class="reference internal" href="6timeingYourKernel.html">6_TimingYourKernel测试你的kernel性能</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">7_理解基本的CUDA执行模型-CUDA Execution Model</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#gpu-architecuture-overview">GPU architecuture Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cuda-gpu-magic-number">CUDA GPU magic number</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#threads">threads的并行与同步</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-heart-of-the-gpu-architecture">THE Heart of THE GPU Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-fermi-architecture">The Fermi Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-kepler-architecture">The Kepler Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#profile-driven-optimizaiton">Profile-Driven Optimizaiton性能驱动的优化</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cuda">CUDA 提供了两种性能分析工具</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#kernelprofile-driven-approach">你将学到如何写高效的kernel通过使用profile-driven approach</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">影响性能的可能的原因</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="8Warp.html">8_Understanding_the_nature_of_WARP</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">cuda</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>7_理解基本的CUDA执行模型-CUDA Execution Model</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/source/7ExecutModel_intro.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="cuda-cuda-execution-model">
+<h1>7_理解基本的CUDA执行模型-CUDA Execution Model<a class="headerlink" href="#cuda-cuda-execution-model" title="Permalink to this headline">¶</a></h1>
+<p>通过以前的知识我们知道如何去通过配置grid和block来lauch kernel,
+本章我们会有一些指导如何来配置grid和block来提高性能.</p>
+<p>You might want to know if there are some guidelines for selecting
+grid and block configurations.</p>
+<p>This chapter will answer those questions and provide you with deeper insight into kernel launch configurations and performance profile information,</p>
+<p>but from a different angle: the hardware perspective.</p>
+<div class="section" id="gpu-architecuture-overview">
+<h2>GPU architecuture Overview<a class="headerlink" href="#gpu-architecuture-overview" title="Permalink to this headline">¶</a></h2>
+<p>GPU 是由一组流处理器的阵列来构成(Streaming Multiprocessors).</p>
+<p>CUDA 组件</p>
+<ul class="simple">
+<li>CUDA cores</li>
+<li>Shared Memory/L1 Cache</li>
+<li>Register File</li>
+<li>Load/Store Units</li>
+<li>Special Function Units</li>
+<li>Warp Scheduler</li>
+<li>SIMT VS SIMD</li>
+</ul>
+<p>CUDA 是单指令多线程架构(SIMT - single Instruction Multiple Thread), 如此管理和执行以32个线程组成一组的warp.</p>
+<p>在同一个warp中的所有线程在同一时间执行相同的指令,每个线程有自己的指令地址计数器和寄存器状态,有各自的数据.每个SM把block分成以32个线程的warp为一组来调度并执行.</p>
+<p>SIMT有别与AMD的SIMD，SIMT的好处就是无需开发者费力把数据凑成合适的矢量长度，并且SIMT允许每个线程有不同的分支。 纯粹使用SIMD不能并行的执行有条件跳转的函数，很显然条件跳转会根据输入数据不同在不同的线程中有不同表现，这个只有利用SIMT才能做到。</p>
+<p>一个重要不同是SIMD中的向量中的元素相互之间可以自由通信，因为它们存在于相同的地址空间（例如，都在CPU的同一寄存器中），而SIMT中的每个线程的寄存器都是私有的，线程之间只能通过shared memory和同步机制进行通信。</p>
+<p>总结:
+SIMT与SIMD本质相同：都是单指令多数据。
+SIMT比SIMD更灵活，允许一条指令的多数据分开寻址；SIMD是必须连续在一起的片段。
+SIMT形式上是多线程，本质上还是一个线程，只不过数据可以零散的分散开。但是如果你真的将数据分散开的话，执行效率上又会大打折扣，因为不满足并行访问的要求。
+总之SIMT是SIMD的一种推广，更灵活而已。</p>
+<ul class="simple">
+<li>SIMT model include three key features that SIMD does not.</li>
+</ul>
+<p>-1. Each thread has its own instruction address counter.</p>
+<p>-2. Each thread has its own register state.</p>
+<p>-3. Each thread can have an independent execution path.</p>
+</div>
+<div class="section" id="cuda-gpu-magic-number">
+<h2>CUDA GPU magic number<a class="headerlink" href="#cuda-gpu-magic-number" title="Permalink to this headline">¶</a></h2>
+<img alt="../_images/magicnumber.png" src="../_images/magicnumber.png" />
+</div>
+<div class="section" id="threads">
+<h2>threads的并行与同步<a class="headerlink" href="#threads" title="Permalink to this headline">¶</a></h2>
+<p>　需要注意的是，大部分threads只是逻辑上并行，并不是所有的thread可以在物理上同时执行。例如，遇到分支语句（if else，while，for等）时，各个thread的执行条件不一样必然产生分支执行，这就导致同一个block中的线程可能会有不同步调。另外，并行thread之间的共享数据会导致竞态：多个线程请求同一个数据会导致未定义行为。CUDA提供了cudaThreadSynchronize()来同步同一个block的thread以保证在进行下一步处理之前，所有thread都到达某个时间点。
+　　同一个warp中的thread可以以任意顺序执行，active warps被sm资源限制。当一个warp空闲时，SM就可以调度驻留在该SM中另一个可用warp。在并发的warp之间切换是没什么消耗的，因为硬件资源早就被分配到所有thread和block，所以该新调度的warp的状态已经存储在SM中了。不同于CPU，CPU切换线程需要保存/读取线程上下文（register内容），这是非常耗时的，而GPU为每个threads提供物理register，无需保存/读取上下文。</p>
+</div>
+<div class="section" id="the-heart-of-the-gpu-architecture">
+<h2>THE Heart of THE GPU Architecture<a class="headerlink" href="#the-heart-of-the-gpu-architecture" title="Permalink to this headline">¶</a></h2>
+<img alt="../_images/heartofGPU.png" src="../_images/heartofGPU.png" />
+</div>
+<div class="section" id="the-fermi-architecture">
+<h2>The Fermi Architecture<a class="headerlink" href="#the-fermi-architecture" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="the-kepler-architecture">
+<h2>The Kepler Architecture<a class="headerlink" href="#the-kepler-architecture" title="Permalink to this headline">¶</a></h2>
+<p>Kepler架构有一个特性,就是动态并行(Dynamic Parallelism)
+它允许通过GPU端lauch kernel,而不是必须由host端launch kernel,这样可以省去与cpu的交互.</p>
+</div>
+<div class="section" id="profile-driven-optimizaiton">
+<h2>Profile-Driven Optimizaiton性能驱动的优化<a class="headerlink" href="#profile-driven-optimizaiton" title="Permalink to this headline">¶</a></h2>
+<p>Profiling 可以分析程序性能通过测量:</p>
+<ul class="simple">
+<li>代码的空间复杂度与时间复杂度.</li>
+<li>特殊指令的使用</li>
+<li>函数调用的频率与使用周期</li>
+</ul>
+<p>Profiling tools provide deep insight into kernel performance and help you identify bottlenecks in
+kernels.</p>
+</div>
+<div class="section" id="cuda">
+<h2>CUDA 提供了两种性能分析工具<a class="headerlink" href="#cuda" title="Permalink to this headline">¶</a></h2>
+<p>CUDA provides two primary profiling tools:</p>
+<ul class="simple">
+<li>nvvp, a standalone visual profiler;</li>
+<li>nvprof, a command-line profiler.</li>
+<li><ol class="first arabic">
+<li>nvvp</li>
+</ol>
+</li>
+</ul>
+<p>nvvp is  a Visual Profiler, which helps you to visualize and optimize the performance of your CUDA program. This tool displays a timeline of program activity on both the CPU and GPU, helping you
+to identify opportunities for performance improvement. In addition, nvvp analyzes your application for potential performance bottlenecks and suggests actions to take to eliminate or reduce those
+bottlenecks. The tool is available as both a standalone application and as part of the Nsight Eclipse Edition (nsight).</p>
+<ul class="simple">
+<li><ol class="first arabic" start="2">
+<li>nvprof</li>
+</ol>
+</li>
+</ul>
+<p>nvprof collects and displays profiling data on the command line. nvprof was introduced with
+CUDA 5 and evolved from an older command-line CUDA profiling tool. Like nvvp, it enables the
+collection of a timeline of CUDA-related activities on both the CPU and GPU, including kernel execution, memory transfers, and CUDA API calls. It also enables you to collect hardware counters and
+performance metrics for CUDA kernels.</p>
+</div>
+<div class="section" id="kernelprofile-driven-approach">
+<h2>你将学到如何写高效的kernel通过使用profile-driven approach<a class="headerlink" href="#kernelprofile-driven-approach" title="Permalink to this headline">¶</a></h2>
+<p>Throughout the examples and exercises in this book, you will learn about the proper metrics for analyzing kernels with the command-line profiler and master the skill of writing an efficient kernel using the profile-driven approach.</p>
+<p>In this book, you will mainly use nvprof to dissect your kernel with the goal of improving performance. You will learn how to select appropriate counters and metrics, and use nvprof from the command line to collect profiling data, which can then be used to plan an optimization strategy. You will learn how to analyze your kernel from multiple angles using different counters and metrics.</p>
+</div>
+<div class="section" id="id1">
+<h2>影响性能的可能的原因<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li>存储带宽 Memory Bandwidth</li>
+<li>计算资源</li>
+<li>指令与存储延迟  instruction and memory latency</li>
+</ol>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="8Warp.html" class="btn btn-neutral float-right" title="8_Understanding_the_nature_of_WARP" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="6timeingYourKernel.html" class="btn btn-neutral" title="6_TimingYourKernel测试你的kernel性能" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, lijun.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

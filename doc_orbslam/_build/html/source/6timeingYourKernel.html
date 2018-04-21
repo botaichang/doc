@@ -1,0 +1,460 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>6_TimingYourKernel测试你的kernel性能 &mdash; cuda 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="cuda 1.0 documentation" href="../index.html"/>
+        <link rel="next" title="7_理解基本的CUDA执行模型-CUDA Execution Model" href="7ExecutModel_intro.html"/>
+        <link rel="prev" title="5_CheckYourCudaResults" href="5checkYourCudaResults.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> cuda
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="1helloworld.html">1_Helloword</a></li>
+<li class="toctree-l1"><a class="reference internal" href="2gridBlock.html">2_GridBlock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="3checkDimension.html">3_CheckDimension从Host,Device端访问维度</a></li>
+<li class="toctree-l1"><a class="reference internal" href="4checkThreadIdx.html">4_CheckThreadIdx</a></li>
+<li class="toctree-l1"><a class="reference internal" href="5checkYourCudaResults.html">5_CheckYourCudaResults</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">6_TimingYourKernel测试你的kernel性能</a></li>
+<li class="toctree-l1"><a class="reference internal" href="7ExecutModel_intro.html">7_理解基本的CUDA执行模型-CUDA Execution Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="8Warp.html">8_Understanding_the_nature_of_WARP</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">cuda</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>6_TimingYourKernel测试你的kernel性能</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/source/6timeingYourKernel.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="timingyourkernelkernel">
+<h1>6_TimingYourKernel测试你的kernel性能<a class="headerlink" href="#timingyourkernelkernel" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><ol class="first arabic">
+<li>用sys/time.h的函数</li>
+</ol>
+</li>
+</ul>
+<p>CPU timer can be created by using the gettimeofday system call to get the system’s wall-clock time, which returns the number of seconds since the epoch. You need to include the sys/time.h header file</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">include</span> <span class="o">&lt;</span><span class="n">sys</span><span class="o">/</span><span class="n">time</span><span class="o">.</span><span class="n">h</span><span class="o">&gt;</span>
+<span class="n">inline</span> <span class="n">double</span> <span class="n">seconds</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">struct</span> <span class="n">timeval</span> <span class="n">tp</span><span class="p">;</span>
+    <span class="n">struct</span> <span class="n">timezone</span> <span class="n">tzp</span><span class="p">;</span>
+    <span class="nb">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">gettimeofday</span><span class="p">(</span><span class="o">&amp;</span><span class="n">tp</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tzp</span><span class="p">);</span>
+    <span class="k">return</span> <span class="p">((</span><span class="n">double</span><span class="p">)</span><span class="n">tp</span><span class="o">.</span><span class="n">tv_sec</span> <span class="o">+</span> <span class="p">(</span><span class="n">double</span><span class="p">)</span><span class="n">tp</span><span class="o">.</span><span class="n">tv_usec</span> <span class="o">*</span> <span class="mf">1.e-6</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><ol class="first arabic" start="2">
+<li>用nvprof 命令行来测试cuda API所好用的时间</li>
+</ol>
+</li>
+</ul>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">nvprof</span> <span class="o">./</span><span class="n">可执行文件</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">nvprof</span> <span class="n">o</span><span class="o">./</span><span class="n">oumArraysOnGPU</span><span class="o">-</span><span class="n">timer</span>
+
+<span class="n">NVPROF</span> <span class="ow">is</span> <span class="n">profiling</span> <span class="n">process</span> <span class="mi">12644</span><span class="p">,</span> <span class="n">command</span><span class="p">:</span> <span class="o">./</span><span class="n">sumArraysOnGPU</span><span class="o">-</span><span class="n">timer</span>
+<span class="n">Using</span> <span class="n">Device</span> <span class="mi">0</span><span class="p">:</span> <span class="n">GeForce</span> <span class="n">GTX</span> <span class="mi">1080</span>
+<span class="n">Vector</span> <span class="n">size</span> <span class="mi">16777216</span>
+<span class="n">initialData</span> <span class="n">Time</span> <span class="n">elapsed</span> <span class="mf">0.604351</span> <span class="n">sec</span>
+<span class="n">sumArraysOnHost</span> <span class="n">Time</span> <span class="n">elapsed</span> <span class="mf">0.012240</span> <span class="n">sec</span>
+<span class="n">sumArraysOnGPU</span> <span class="o">&lt;&lt;&lt;</span>  <span class="mi">32768</span><span class="p">,</span> <span class="mi">512</span>  <span class="o">&gt;&gt;&gt;</span>  <span class="n">Time</span> <span class="n">elapsed</span> <span class="mf">0.000959</span> <span class="n">sec</span>
+<span class="n">Arrays</span> <span class="n">match</span><span class="o">.</span>
+
+<span class="o">==</span><span class="mi">12644</span><span class="o">==</span> <span class="n">Profiling</span> <span class="n">application</span><span class="p">:</span> <span class="o">./</span><span class="n">sumArraysOnGPU</span><span class="o">-</span><span class="n">timer</span>
+<span class="o">==</span><span class="mi">12644</span><span class="o">==</span> <span class="n">Profiling</span> <span class="n">result</span><span class="p">:</span>
+<span class="n">Time</span><span class="p">(</span><span class="o">%</span><span class="p">)</span>      <span class="n">Time</span>     <span class="n">Calls</span>       <span class="n">Avg</span>       <span class="n">Min</span>       <span class="n">Max</span>  <span class="n">Name</span>
+<span class="mf">73.05</span><span class="o">%</span>  <span class="mf">23.592</span><span class="n">ms</span>         <span class="mi">3</span>  <span class="mf">7.8640</span><span class="n">ms</span>  <span class="mf">7.7391</span><span class="n">ms</span>  <span class="mf">7.9720</span><span class="n">ms</span>  <span class="p">[</span><span class="n">CUDA</span> <span class="n">memcpy</span> <span class="n">HtoD</span><span class="p">]</span>
+<span class="mf">24.38</span><span class="o">%</span>  <span class="mf">7.8736</span><span class="n">ms</span>         <span class="mi">1</span>  <span class="mf">7.8736</span><span class="n">ms</span>  <span class="mf">7.8736</span><span class="n">ms</span>  <span class="mf">7.8736</span><span class="n">ms</span>  <span class="p">[</span><span class="n">CUDA</span> <span class="n">memcpy</span> <span class="n">DtoH</span><span class="p">]</span>
+<span class="mf">2.56</span><span class="o">%</span>  <span class="mf">828.31</span><span class="n">us</span>         <span class="mi">1</span>  <span class="mf">828.31</span><span class="n">us</span>  <span class="mf">828.31</span><span class="n">us</span>  <span class="mf">828.31</span><span class="n">us</span>  <span class="n">sumArraysOnGPU</span><span class="p">(</span><span class="nb">float</span><span class="o">*</span><span class="p">,</span> <span class="nb">float</span><span class="o">*</span><span class="p">,</span> <span class="nb">float</span><span class="o">*</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+
+<span class="o">==</span><span class="mi">12644</span><span class="o">==</span> <span class="n">API</span> <span class="n">calls</span><span class="p">:</span>
+<span class="n">Time</span><span class="p">(</span><span class="o">%</span><span class="p">)</span>      <span class="n">Time</span>     <span class="n">Calls</span>       <span class="n">Avg</span>       <span class="n">Min</span>       <span class="n">Max</span>  <span class="n">Name</span>
+<span class="mf">89.62</span><span class="o">%</span>  <span class="mf">323.27</span><span class="n">ms</span>         <span class="mi">3</span>  <span class="mf">107.76</span><span class="n">ms</span>  <span class="mf">252.03</span><span class="n">us</span>  <span class="mf">322.75</span><span class="n">ms</span>  <span class="n">cudaMalloc</span>
+<span class="mf">8.83</span><span class="o">%</span>  <span class="mf">31.856</span><span class="n">ms</span>         <span class="mi">4</span>  <span class="mf">7.9639</span><span class="n">ms</span>  <span class="mf">7.8661</span><span class="n">ms</span>  <span class="mf">8.0520</span><span class="n">ms</span>  <span class="n">cudaMemcpy</span>
+<span class="mf">1.07</span><span class="o">%</span>  <span class="mf">3.8497</span><span class="n">ms</span>         <span class="mi">3</span>  <span class="mf">1.2832</span><span class="n">ms</span>  <span class="mf">182.49</span><span class="n">us</span>  <span class="mf">1.8400</span><span class="n">ms</span>  <span class="n">cudaFree</span>
+<span class="mf">0.26</span><span class="o">%</span>  <span class="mf">923.12</span><span class="n">us</span>         <span class="mi">1</span>  <span class="mf">923.12</span><span class="n">us</span>  <span class="mf">923.12</span><span class="n">us</span>  <span class="mf">923.12</span><span class="n">us</span>  <span class="n">cudaDeviceSynchronize</span>
+<span class="mf">0.09</span><span class="o">%</span>  <span class="mf">312.99</span><span class="n">us</span>        <span class="mi">91</span>  <span class="mf">3.4390</span><span class="n">us</span>     <span class="mi">105</span><span class="n">ns</span>  <span class="mf">138.29</span><span class="n">us</span>  <span class="n">cuDeviceGetAttribute</span>
+<span class="mf">0.08</span><span class="o">%</span>  <span class="mf">305.22</span><span class="n">us</span>         <span class="mi">1</span>  <span class="mf">305.22</span><span class="n">us</span>  <span class="mf">305.22</span><span class="n">us</span>  <span class="mf">305.22</span><span class="n">us</span>  <span class="n">cudaGetDeviceProperties</span>
+<span class="mf">0.03</span><span class="o">%</span>  <span class="mf">110.51</span><span class="n">us</span>         <span class="mi">1</span>  <span class="mf">110.51</span><span class="n">us</span>  <span class="mf">110.51</span><span class="n">us</span>  <span class="mf">110.51</span><span class="n">us</span>  <span class="n">cuDeviceTotalMem</span>
+<span class="mf">0.01</span><span class="o">%</span>  <span class="mf">34.371</span><span class="n">us</span>         <span class="mi">1</span>  <span class="mf">34.371</span><span class="n">us</span>  <span class="mf">34.371</span><span class="n">us</span>  <span class="mf">34.371</span><span class="n">us</span>  <span class="n">cuDeviceGetName</span>
+<span class="mf">0.01</span><span class="o">%</span>  <span class="mf">28.581</span><span class="n">us</span>         <span class="mi">1</span>  <span class="mf">28.581</span><span class="n">us</span>  <span class="mf">28.581</span><span class="n">us</span>  <span class="mf">28.581</span><span class="n">us</span>  <span class="n">cudaLaunch</span>
+<span class="mf">0.00</span><span class="o">%</span>  <span class="mf">5.7500</span><span class="n">us</span>         <span class="mi">1</span>  <span class="mf">5.7500</span><span class="n">us</span>  <span class="mf">5.7500</span><span class="n">us</span>  <span class="mf">5.7500</span><span class="n">us</span>  <span class="n">cudaSetDevice</span>
+<span class="mf">0.00</span><span class="o">%</span>  <span class="mf">1.7300</span><span class="n">us</span>         <span class="mi">3</span>     <span class="mi">576</span><span class="n">ns</span>     <span class="mi">133</span><span class="n">ns</span>  <span class="mf">1.3610</span><span class="n">us</span>  <span class="n">cuDeviceGetCount</span>
+<span class="mf">0.00</span><span class="o">%</span>  <span class="mf">1.5580</span><span class="n">us</span>         <span class="mi">1</span>  <span class="mf">1.5580</span><span class="n">us</span>  <span class="mf">1.5580</span><span class="n">us</span>  <span class="mf">1.5580</span><span class="n">us</span>  <span class="n">cudaConfigureCall</span>
+<span class="mf">0.00</span><span class="o">%</span>  <span class="mf">1.2100</span><span class="n">us</span>         <span class="mi">4</span>     <span class="mi">302</span><span class="n">ns</span>     <span class="mi">149</span><span class="n">ns</span>     <span class="mi">521</span><span class="n">ns</span>  <span class="n">cudaSetupArgument</span>
+<span class="mf">0.00</span><span class="o">%</span>  <span class="mf">1.1950</span><span class="n">us</span>         <span class="mi">3</span>     <span class="mi">398</span><span class="n">ns</span>     <span class="mi">109</span><span class="n">ns</span>     <span class="mi">885</span><span class="n">ns</span>  <span class="n">cuDeviceGet</span>
+<span class="mf">0.00</span><span class="o">%</span>     <span class="mi">360</span><span class="n">ns</span>         <span class="mi">1</span>     <span class="mi">360</span><span class="n">ns</span>     <span class="mi">360</span><span class="n">ns</span>     <span class="mi">360</span><span class="n">ns</span>  <span class="n">cudaGetLastError</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><ol class="first arabic" start="3">
+<li>例子</li>
+</ol>
+</li>
+</ul>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">#include &quot;../common/common.h&quot;</span>
+<span class="c1">#include &lt;cuda_runtime.h&gt;</span>
+<span class="c1">#include &lt;stdio.h&gt;</span>
+
+<span class="o">/*</span>
+ <span class="o">*</span> <span class="n">This</span> <span class="n">example</span> <span class="n">demonstrates</span> <span class="n">a</span> <span class="n">simple</span> <span class="n">vector</span> <span class="nb">sum</span> <span class="n">on</span> <span class="n">the</span> <span class="n">GPU</span> <span class="ow">and</span> <span class="n">on</span> <span class="n">the</span> <span class="n">host</span><span class="o">.</span>
+ <span class="o">*</span> <span class="n">sumArraysOnGPU</span> <span class="n">splits</span> <span class="n">the</span> <span class="n">work</span> <span class="n">of</span> <span class="n">the</span> <span class="n">vector</span> <span class="nb">sum</span> <span class="n">across</span> <span class="n">CUDA</span> <span class="n">threads</span> <span class="n">on</span> <span class="n">the</span>
+ <span class="o">*</span> <span class="n">GPU</span><span class="o">.</span> <span class="n">Only</span> <span class="n">a</span> <span class="n">single</span> <span class="n">thread</span> <span class="n">block</span> <span class="ow">is</span> <span class="n">used</span> <span class="ow">in</span> <span class="n">this</span> <span class="n">small</span> <span class="n">case</span><span class="p">,</span> <span class="k">for</span> <span class="n">simplicity</span><span class="o">.</span>
+ <span class="o">*</span> <span class="n">sumArraysOnHost</span> <span class="n">sequentially</span> <span class="n">iterates</span> <span class="n">through</span> <span class="n">vector</span> <span class="n">elements</span> <span class="n">on</span> <span class="n">the</span> <span class="n">host</span><span class="o">.</span>
+ <span class="o">*</span> <span class="n">This</span> <span class="n">version</span> <span class="n">of</span> <span class="n">sumArrays</span> <span class="n">adds</span> <span class="n">host</span> <span class="n">timers</span> <span class="n">to</span> <span class="n">measure</span> <span class="n">GPU</span> <span class="ow">and</span> <span class="n">CPU</span>
+ <span class="o">*</span> <span class="n">performance</span><span class="o">.</span>
+ <span class="o">*/</span>
+
+ <span class="n">void</span> <span class="n">checkResult</span><span class="p">(</span><span class="nb">float</span> <span class="o">*</span><span class="n">hostRef</span><span class="p">,</span> <span class="nb">float</span> <span class="o">*</span><span class="n">gpuRef</span><span class="p">,</span> <span class="n">const</span> <span class="nb">int</span> <span class="n">N</span><span class="p">)</span>
+ <span class="p">{</span>
+   <span class="n">double</span> <span class="n">epsilon</span> <span class="o">=</span> <span class="mf">1.0E-8</span><span class="p">;</span>
+   <span class="nb">bool</span> <span class="n">match</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+
+   <span class="k">for</span> <span class="p">(</span><span class="nb">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+   <span class="p">{</span>
+     <span class="k">if</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">hostRef</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">gpuRef</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">&gt;</span> <span class="n">epsilon</span><span class="p">)</span>
+     <span class="p">{</span>
+       <span class="n">match</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+       <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Arrays do not match!</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
+       <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;host </span><span class="si">%5.2f</span><span class="s2"> gpu </span><span class="si">%5.2f</span><span class="s2"> at current </span><span class="si">%d</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">hostRef</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+           <span class="n">gpuRef</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">i</span><span class="p">);</span>
+       <span class="k">break</span><span class="p">;</span>
+     <span class="p">}</span>
+   <span class="p">}</span>
+
+   <span class="k">if</span> <span class="p">(</span><span class="n">match</span><span class="p">)</span> <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Arrays match.</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">);</span>
+
+   <span class="k">return</span><span class="p">;</span>
+ <span class="p">}</span>
+
+ <span class="n">void</span> <span class="n">initialData</span><span class="p">(</span><span class="nb">float</span> <span class="o">*</span><span class="n">ip</span><span class="p">,</span> <span class="nb">int</span> <span class="n">size</span><span class="p">)</span>
+ <span class="p">{</span>
+   <span class="o">//</span> <span class="n">generate</span> <span class="n">different</span> <span class="n">seed</span> <span class="k">for</span> <span class="n">random</span> <span class="n">number</span>
+   <span class="n">time_t</span> <span class="n">t</span><span class="p">;</span>
+   <span class="n">srand</span><span class="p">((</span><span class="n">unsigned</span><span class="p">)</span> <span class="n">time</span><span class="p">(</span><span class="o">&amp;</span><span class="n">t</span><span class="p">));</span>
+
+   <span class="k">for</span> <span class="p">(</span><span class="nb">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">size</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+   <span class="p">{</span>
+     <span class="n">ip</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="nb">float</span><span class="p">)(</span> <span class="n">rand</span><span class="p">()</span> <span class="o">&amp;</span> <span class="mh">0xFF</span> <span class="p">)</span> <span class="o">/</span> <span class="mf">10.0</span><span class="n">f</span><span class="p">;</span>
+   <span class="p">}</span>
+
+   <span class="k">return</span><span class="p">;</span>
+ <span class="p">}</span>
+
+ <span class="n">void</span> <span class="n">sumArraysOnHost</span><span class="p">(</span><span class="nb">float</span> <span class="o">*</span><span class="n">A</span><span class="p">,</span> <span class="nb">float</span> <span class="o">*</span><span class="n">B</span><span class="p">,</span> <span class="nb">float</span> <span class="o">*</span><span class="n">C</span><span class="p">,</span> <span class="n">const</span> <span class="nb">int</span> <span class="n">N</span><span class="p">)</span>
+ <span class="p">{</span>
+   <span class="k">for</span> <span class="p">(</span><span class="nb">int</span> <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">;</span> <span class="n">idx</span><span class="o">++</span><span class="p">)</span>
+   <span class="p">{</span>
+     <span class="n">C</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">A</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">+</span> <span class="n">B</span><span class="p">[</span><span class="n">idx</span><span class="p">];</span>
+   <span class="p">}</span>
+ <span class="p">}</span>
+ <span class="n">__global__</span> <span class="n">void</span> <span class="n">sumArraysOnGPU</span><span class="p">(</span><span class="nb">float</span> <span class="o">*</span><span class="n">A</span><span class="p">,</span> <span class="nb">float</span> <span class="o">*</span><span class="n">B</span><span class="p">,</span> <span class="nb">float</span> <span class="o">*</span><span class="n">C</span><span class="p">,</span> <span class="n">const</span> <span class="nb">int</span> <span class="n">N</span><span class="p">)</span>
+ <span class="p">{</span>
+   <span class="nb">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">blockIdx</span><span class="o">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">blockDim</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">threadIdx</span><span class="o">.</span><span class="n">x</span><span class="p">;</span>
+
+   <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">)</span> <span class="n">C</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">A</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">B</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+ <span class="p">}</span>
+
+ <span class="nb">int</span> <span class="n">main</span><span class="p">(</span><span class="nb">int</span> <span class="n">argc</span><span class="p">,</span> <span class="n">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span>
+ <span class="p">{</span>
+   <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> Starting...</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+
+   <span class="o">//</span> <span class="nb">set</span> <span class="n">up</span> <span class="n">device</span>
+   <span class="nb">int</span> <span class="n">dev</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+   <span class="n">cudaDeviceProp</span> <span class="n">deviceProp</span><span class="p">;</span>
+   <span class="n">CHECK</span><span class="p">(</span><span class="n">cudaGetDeviceProperties</span><span class="p">(</span><span class="o">&amp;</span><span class="n">deviceProp</span><span class="p">,</span> <span class="n">dev</span><span class="p">));</span>
+   <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Using Device </span><span class="si">%d</span><span class="s2">: </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">dev</span><span class="p">,</span> <span class="n">deviceProp</span><span class="o">.</span><span class="n">name</span><span class="p">);</span>
+   <span class="n">CHECK</span><span class="p">(</span><span class="n">cudaSetDevice</span><span class="p">(</span><span class="n">dev</span><span class="p">));</span>
+
+   <span class="o">//</span> <span class="nb">set</span> <span class="n">up</span> <span class="n">data</span> <span class="n">size</span> <span class="n">of</span> <span class="n">vectors</span>
+   <span class="nb">int</span> <span class="n">nElem</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">24</span><span class="p">;</span>
+   <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Vector size </span><span class="si">%d</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">nElem</span><span class="p">);</span>
+
+   <span class="o">//</span> <span class="n">malloc</span> <span class="n">host</span> <span class="n">memory</span>
+   <span class="n">size_t</span> <span class="n">nBytes</span> <span class="o">=</span> <span class="n">nElem</span> <span class="o">*</span> <span class="n">sizeof</span><span class="p">(</span><span class="nb">float</span><span class="p">);</span>
+
+   <span class="nb">float</span> <span class="o">*</span><span class="n">h_A</span><span class="p">,</span> <span class="o">*</span><span class="n">h_B</span><span class="p">,</span> <span class="o">*</span><span class="n">hostRef</span><span class="p">,</span> <span class="o">*</span><span class="n">gpuRef</span><span class="p">;</span>
+   <span class="n">h_A</span>     <span class="o">=</span> <span class="p">(</span><span class="nb">float</span> <span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="n">nBytes</span><span class="p">);</span>
+   <span class="n">h_B</span>     <span class="o">=</span> <span class="p">(</span><span class="nb">float</span> <span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="n">nBytes</span><span class="p">);</span>
+   <span class="n">hostRef</span> <span class="o">=</span> <span class="p">(</span><span class="nb">float</span> <span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="n">nBytes</span><span class="p">);</span>
+   <span class="n">gpuRef</span>  <span class="o">=</span> <span class="p">(</span><span class="nb">float</span> <span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="n">nBytes</span><span class="p">);</span>
+
+   <span class="n">double</span> <span class="n">iStart</span><span class="p">,</span> <span class="n">iElaps</span><span class="p">;</span>
+
+   <span class="o">//</span> <span class="n">initialize</span> <span class="n">data</span> <span class="n">at</span> <span class="n">host</span> <span class="n">side</span>
+   <span class="n">iStart</span> <span class="o">=</span> <span class="n">seconds</span><span class="p">();</span>
+   <span class="n">initialData</span><span class="p">(</span><span class="n">h_A</span><span class="p">,</span> <span class="n">nElem</span><span class="p">);</span>
+   <span class="n">initialData</span><span class="p">(</span><span class="n">h_B</span><span class="p">,</span> <span class="n">nElem</span><span class="p">);</span>
+   <span class="n">iElaps</span> <span class="o">=</span> <span class="n">seconds</span><span class="p">()</span> <span class="o">-</span> <span class="n">iStart</span><span class="p">;</span>
+   <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;initialData Time elapsed </span><span class="si">%f</span><span class="s2"> sec</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">iElaps</span><span class="p">);</span>
+   <span class="n">memset</span><span class="p">(</span><span class="n">hostRef</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">nBytes</span><span class="p">);</span>
+   <span class="n">memset</span><span class="p">(</span><span class="n">gpuRef</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span> <span class="n">nBytes</span><span class="p">);</span>
+
+   <span class="o">//</span> <span class="n">add</span> <span class="n">vector</span> <span class="n">at</span> <span class="n">host</span> <span class="n">side</span> <span class="k">for</span> <span class="n">result</span> <span class="n">checks</span>
+   <span class="n">iStart</span> <span class="o">=</span> <span class="n">seconds</span><span class="p">();</span>
+   <span class="n">sumArraysOnHost</span><span class="p">(</span><span class="n">h_A</span><span class="p">,</span> <span class="n">h_B</span><span class="p">,</span> <span class="n">hostRef</span><span class="p">,</span> <span class="n">nElem</span><span class="p">);</span>
+   <span class="n">iElaps</span> <span class="o">=</span> <span class="n">seconds</span><span class="p">()</span> <span class="o">-</span> <span class="n">iStart</span><span class="p">;</span>
+   <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;sumArraysOnHost Time elapsed </span><span class="si">%f</span><span class="s2"> sec</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">iElaps</span><span class="p">);</span>
+
+   <span class="o">//</span> <span class="n">malloc</span> <span class="n">device</span> <span class="k">global</span> <span class="n">memory</span>
+   <span class="nb">float</span> <span class="o">*</span><span class="n">d_A</span><span class="p">,</span> <span class="o">*</span><span class="n">d_B</span><span class="p">,</span> <span class="o">*</span><span class="n">d_C</span><span class="p">;</span>
+   <span class="n">CHECK</span><span class="p">(</span><span class="n">cudaMalloc</span><span class="p">((</span><span class="nb">float</span><span class="o">**</span><span class="p">)</span><span class="o">&amp;</span><span class="n">d_A</span><span class="p">,</span> <span class="n">nBytes</span><span class="p">));</span>
+   <span class="n">CHECK</span><span class="p">(</span><span class="n">cudaMalloc</span><span class="p">((</span><span class="nb">float</span><span class="o">**</span><span class="p">)</span><span class="o">&amp;</span><span class="n">d_B</span><span class="p">,</span> <span class="n">nBytes</span><span class="p">));</span>
+   <span class="n">CHECK</span><span class="p">(</span><span class="n">cudaMalloc</span><span class="p">((</span><span class="nb">float</span><span class="o">**</span><span class="p">)</span><span class="o">&amp;</span><span class="n">d_C</span><span class="p">,</span> <span class="n">nBytes</span><span class="p">));</span>
+
+   <span class="o">//</span> <span class="n">transfer</span> <span class="n">data</span> <span class="kn">from</span> <span class="nn">host</span> <span class="n">to</span> <span class="n">device</span>
+   <span class="n">CHECK</span><span class="p">(</span><span class="n">cudaMemcpy</span><span class="p">(</span><span class="n">d_A</span><span class="p">,</span> <span class="n">h_A</span><span class="p">,</span> <span class="n">nBytes</span><span class="p">,</span> <span class="n">cudaMemcpyHostToDevice</span><span class="p">));</span>
+   <span class="n">CHECK</span><span class="p">(</span><span class="n">cudaMemcpy</span><span class="p">(</span><span class="n">d_B</span><span class="p">,</span> <span class="n">h_B</span><span class="p">,</span> <span class="n">nBytes</span><span class="p">,</span> <span class="n">cudaMemcpyHostToDevice</span><span class="p">));</span>
+   <span class="n">CHECK</span><span class="p">(</span><span class="n">cudaMemcpy</span><span class="p">(</span><span class="n">d_C</span><span class="p">,</span> <span class="n">gpuRef</span><span class="p">,</span> <span class="n">nBytes</span><span class="p">,</span> <span class="n">cudaMemcpyHostToDevice</span><span class="p">));</span>
+
+   <span class="o">//</span> <span class="n">invoke</span> <span class="n">kernel</span> <span class="n">at</span> <span class="n">host</span> <span class="n">side</span>
+   <span class="nb">int</span> <span class="n">iLen</span> <span class="o">=</span> <span class="mi">512</span><span class="p">;</span>
+   <span class="n">dim3</span> <span class="n">block</span> <span class="p">(</span><span class="n">iLen</span><span class="p">);</span>
+   <span class="n">dim3</span> <span class="n">grid</span>  <span class="p">((</span><span class="n">nElem</span> <span class="o">+</span> <span class="n">block</span><span class="o">.</span><span class="n">x</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">block</span><span class="o">.</span><span class="n">x</span><span class="p">);</span>
+
+   <span class="n">iStart</span> <span class="o">=</span> <span class="n">seconds</span><span class="p">();</span>
+   <span class="n">sumArraysOnGPU</span><span class="o">&lt;&lt;&lt;</span><span class="n">grid</span><span class="p">,</span> <span class="n">block</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">d_A</span><span class="p">,</span> <span class="n">d_B</span><span class="p">,</span> <span class="n">d_C</span><span class="p">,</span> <span class="n">nElem</span><span class="p">);</span>
+   <span class="n">CHECK</span><span class="p">(</span><span class="n">cudaDeviceSynchronize</span><span class="p">());</span>
+   <span class="n">iElaps</span> <span class="o">=</span> <span class="n">seconds</span><span class="p">()</span> <span class="o">-</span> <span class="n">iStart</span><span class="p">;</span>
+   <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;sumArraysOnGPU &lt;&lt;&lt;  </span><span class="si">%d</span><span class="s2">, </span><span class="si">%d</span><span class="s2">  &gt;&gt;&gt;  Time elapsed </span><span class="si">%f</span><span class="s2"> sec</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">grid</span><span class="o">.</span><span class="n">x</span><span class="p">,</span>
+       <span class="n">block</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">iElaps</span><span class="p">);</span>
+
+   <span class="o">//</span> <span class="n">check</span> <span class="n">kernel</span> <span class="n">error</span>
+   <span class="n">CHECK</span><span class="p">(</span><span class="n">cudaGetLastError</span><span class="p">())</span> <span class="p">;</span>
+
+   <span class="o">//</span> <span class="n">copy</span> <span class="n">kernel</span> <span class="n">result</span> <span class="n">back</span> <span class="n">to</span> <span class="n">host</span> <span class="n">side</span>
+   <span class="n">CHECK</span><span class="p">(</span><span class="n">cudaMemcpy</span><span class="p">(</span><span class="n">gpuRef</span><span class="p">,</span> <span class="n">d_C</span><span class="p">,</span> <span class="n">nBytes</span><span class="p">,</span> <span class="n">cudaMemcpyDeviceToHost</span><span class="p">));</span>
+
+   <span class="o">//</span> <span class="n">check</span> <span class="n">device</span> <span class="n">results</span>
+   <span class="n">checkResult</span><span class="p">(</span><span class="n">hostRef</span><span class="p">,</span> <span class="n">gpuRef</span><span class="p">,</span> <span class="n">nElem</span><span class="p">);</span>
+
+   <span class="o">//</span> <span class="n">free</span> <span class="n">device</span> <span class="k">global</span> <span class="n">memory</span>
+   <span class="n">CHECK</span><span class="p">(</span><span class="n">cudaFree</span><span class="p">(</span><span class="n">d_A</span><span class="p">));</span>
+   <span class="n">CHECK</span><span class="p">(</span><span class="n">cudaFree</span><span class="p">(</span><span class="n">d_B</span><span class="p">));</span>
+   <span class="n">CHECK</span><span class="p">(</span><span class="n">cudaFree</span><span class="p">(</span><span class="n">d_C</span><span class="p">));</span>
+
+   <span class="o">//</span> <span class="n">free</span> <span class="n">host</span> <span class="n">memory</span>
+   <span class="n">free</span><span class="p">(</span><span class="n">h_A</span><span class="p">);</span>
+   <span class="n">free</span><span class="p">(</span><span class="n">h_B</span><span class="p">);</span>
+   <span class="n">free</span><span class="p">(</span><span class="n">hostRef</span><span class="p">);</span>
+   <span class="n">free</span><span class="p">(</span><span class="n">gpuRef</span><span class="p">);</span>
+
+   <span class="k">return</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+ <span class="p">}</span>
+</pre></div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="7ExecutModel_intro.html" class="btn btn-neutral float-right" title="7_理解基本的CUDA执行模型-CUDA Execution Model" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="5checkYourCudaResults.html" class="btn btn-neutral" title="5_CheckYourCudaResults" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, lijun.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

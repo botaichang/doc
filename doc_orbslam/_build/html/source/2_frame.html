@@ -1,0 +1,335 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>2.Frame帧类 &mdash; vision 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="vision 1.0 documentation" href="../index.html"/>
+        <link rel="next" title="3.keyframe 关键帧" href="3_keyframe.html"/>
+        <link rel="prev" title="1.初始化Initializer.h" href="1initializer.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> vision
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="1initializer.html">1.初始化Initializer.h</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">2.Frame帧类</a></li>
+<li class="toctree-l1"><a class="reference internal" href="3_keyframe.html">3.keyframe 关键帧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="4_keyframedatabase.html">4.KeyframeDatabase</a></li>
+<li class="toctree-l1"><a class="reference internal" href="5_mappoint.html">5.MapPoint 路标点,地图点</a></li>
+<li class="toctree-l1"><a class="reference internal" href="6_map.html">6.Map地图</a></li>
+<li class="toctree-l1"><a class="reference internal" href="7_orbextractor.html">7.ORBExtractor  ORB特征提取</a></li>
+<li class="toctree-l1"><a class="reference internal" href="8_orbmatcher.html">8.ORBmatcher ORB 特征匹配</a></li>
+<li class="toctree-l1"><a class="reference internal" href="9_framedrawer.html">9.FrameDrawer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="10_tracking.html">10. Tracking 跟踪</a></li>
+<li class="toctree-l1"><a class="reference internal" href="11_PnPsolver.html">11.PnPsolver</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">vision</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>2.Frame帧类</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/source/2_frame.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="frame">
+<h1>2.Frame帧类<a class="headerlink" href="#frame" title="Permalink to this headline">¶</a></h1>
+<p>Frame类中包含了MapPoint类和KeyFrame类</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">#include &quot;MapPoint.h&quot;</span>
+<span class="c1">#include &quot;Thirdparty/DBoW2/DBoW2/BowVector.h&quot;</span>
+<span class="c1">#include &quot;Thirdparty/DBoW2/DBoW2/FeatureVector.h&quot;</span>
+<span class="c1">#include &quot;ORBVocabulary.h&quot;</span>
+<span class="c1">#include &quot;KeyFrame.h&quot;</span>
+<span class="c1">#include &quot;ORBextractor.h&quot;</span>
+
+<span class="k">class</span> <span class="nc">MapPoint</span><span class="p">;</span>
+<span class="k">class</span> <span class="nc">KeyFrame</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>分别为双目摄像头，深度摄像头，单目摄像头三类构建帧类的复制构造函数</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">Constructor</span> <span class="k">for</span> <span class="n">stereo</span> <span class="n">cameras</span><span class="o">.</span>
+<span class="n">Frame</span><span class="p">(</span><span class="n">const</span> <span class="n">cv</span><span class="p">::</span><span class="n">Mat</span> <span class="o">&amp;</span><span class="n">imLeft</span><span class="p">,</span> <span class="n">const</span> <span class="n">cv</span><span class="p">::</span><span class="n">Mat</span> <span class="o">&amp;</span><span class="n">imRight</span><span class="p">,</span> <span class="n">const</span> <span class="n">double</span> <span class="o">&amp;</span><span class="n">timeStamp</span><span class="p">,</span> <span class="n">ORBextractor</span><span class="o">*</span> <span class="n">extractorLeft</span><span class="p">,</span> <span class="n">ORBextractor</span><span class="o">*</span> <span class="n">extractorRight</span><span class="p">,</span> <span class="n">ORBVocabulary</span><span class="o">*</span> <span class="n">voc</span><span class="p">,</span> <span class="n">cv</span><span class="p">::</span><span class="n">Mat</span> <span class="o">&amp;</span><span class="n">K</span><span class="p">,</span> <span class="n">cv</span><span class="p">::</span><span class="n">Mat</span> <span class="o">&amp;</span><span class="n">distCoef</span><span class="p">,</span> <span class="n">const</span> <span class="nb">float</span> <span class="o">&amp;</span><span class="n">bf</span><span class="p">,</span> <span class="n">const</span> <span class="nb">float</span> <span class="o">&amp;</span><span class="n">thDepth</span><span class="p">);</span>
+
+<span class="o">//</span> <span class="n">Constructor</span> <span class="k">for</span> <span class="n">RGB</span><span class="o">-</span><span class="n">D</span> <span class="n">cameras</span><span class="o">.</span>
+<span class="n">Frame</span><span class="p">(</span><span class="n">const</span> <span class="n">cv</span><span class="p">::</span><span class="n">Mat</span> <span class="o">&amp;</span><span class="n">imGray</span><span class="p">,</span> <span class="n">const</span> <span class="n">cv</span><span class="p">::</span><span class="n">Mat</span> <span class="o">&amp;</span><span class="n">imDepth</span><span class="p">,</span> <span class="n">const</span> <span class="n">double</span> <span class="o">&amp;</span><span class="n">timeStamp</span><span class="p">,</span> <span class="n">ORBextractor</span><span class="o">*</span> <span class="n">extractor</span><span class="p">,</span><span class="n">ORBVocabulary</span><span class="o">*</span> <span class="n">voc</span><span class="p">,</span> <span class="n">cv</span><span class="p">::</span><span class="n">Mat</span> <span class="o">&amp;</span><span class="n">K</span><span class="p">,</span> <span class="n">cv</span><span class="p">::</span><span class="n">Mat</span> <span class="o">&amp;</span><span class="n">distCoef</span><span class="p">,</span> <span class="n">const</span> <span class="nb">float</span> <span class="o">&amp;</span><span class="n">bf</span><span class="p">,</span> <span class="n">const</span> <span class="nb">float</span> <span class="o">&amp;</span><span class="n">thDepth</span><span class="p">);</span>
+
+<span class="o">//</span> <span class="n">Constructor</span> <span class="k">for</span> <span class="n">Monocular</span> <span class="n">cameras</span><span class="o">.</span>
+<span class="n">Frame</span><span class="p">(</span><span class="n">const</span> <span class="n">cv</span><span class="p">::</span><span class="n">Mat</span> <span class="o">&amp;</span><span class="n">imGray</span><span class="p">,</span> <span class="n">const</span> <span class="n">double</span> <span class="o">&amp;</span><span class="n">timeStamp</span><span class="p">,</span> <span class="n">ORBextractor</span><span class="o">*</span> <span class="n">extractor</span><span class="p">,</span><span class="n">ORBVocabulary</span><span class="o">*</span> <span class="n">voc</span><span class="p">,</span> <span class="n">cv</span><span class="p">::</span><span class="n">Mat</span> <span class="o">&amp;</span><span class="n">K</span><span class="p">,</span> <span class="n">cv</span><span class="p">::</span><span class="n">Mat</span> <span class="o">&amp;</span><span class="n">distCoef</span><span class="p">,</span> <span class="n">const</span> <span class="nb">float</span> <span class="o">&amp;</span><span class="n">bf</span><span class="p">,</span> <span class="n">const</span> <span class="nb">float</span> <span class="o">&amp;</span><span class="n">thDepth</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>抽取ORB特征</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">Extract</span> <span class="n">ORB</span> <span class="n">on</span> <span class="n">the</span> <span class="n">image</span><span class="o">.</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">left</span> <span class="n">image</span> <span class="ow">and</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">right</span> <span class="n">image</span><span class="o">.</span>
+<span class="o">//</span> <span class="n">提取的关键点存放在mvKeys和mDescriptors中</span>
+<span class="o">//</span> <span class="n">ORB是直接调orbExtractor提取的</span>
+<span class="n">void</span> <span class="n">ExtractORB</span><span class="p">(</span><span class="nb">int</span> <span class="n">flag</span><span class="p">,</span> <span class="n">const</span> <span class="n">cv</span><span class="p">::</span><span class="n">Mat</span> <span class="o">&amp;</span><span class="n">im</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>计算词袋BoW</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">Compute</span> <span class="n">Bag</span> <span class="n">of</span> <span class="n">Words</span> <span class="n">representation</span><span class="o">.</span>
+<span class="o">//</span> <span class="n">存放在mBowVec中</span>
+<span class="n">void</span> <span class="n">ComputeBoW</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>设置相机位姿</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">Set</span> <span class="n">the</span> <span class="n">camera</span> <span class="n">pose</span><span class="o">.</span>
+<span class="o">//</span> <span class="n">用Tcw更新mTcw</span>
+<span class="n">void</span> <span class="n">SetPose</span><span class="p">(</span><span class="n">cv</span><span class="p">::</span><span class="n">Mat</span> <span class="n">Tcw</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>从相机姿态中计算旋转，平移和相机中心矩阵</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">Computes</span> <span class="n">rotation</span><span class="p">,</span> <span class="n">translation</span> <span class="ow">and</span> <span class="n">camera</span> <span class="n">center</span> <span class="n">matrices</span> <span class="kn">from</span> <span class="nn">the</span> <span class="n">camera</span> <span class="n">pose</span><span class="o">.</span>
+<span class="n">void</span> <span class="n">UpdatePoseMatrices</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>得到相机中心点</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">Returns</span> <span class="n">the</span> <span class="n">camera</span> <span class="n">center</span><span class="o">.</span>
+<span class="n">inline</span> <span class="n">cv</span><span class="p">::</span><span class="n">Mat</span> <span class="n">GetCameraCenter</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">mOw</span><span class="o">.</span><span class="n">clone</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="o">//</span> <span class="n">Returns</span> <span class="n">inverse</span> <span class="n">of</span> <span class="n">rotation</span>
+</pre></div>
+</div>
+<p>得到旋转矩阵的逆矩阵</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">inline</span> <span class="n">cv</span><span class="p">::</span><span class="n">Mat</span> <span class="n">GetRotationInverse</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">mRwc</span><span class="o">.</span><span class="n">clone</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>判断路标点是否在视野中</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">Check</span> <span class="k">if</span> <span class="n">a</span> <span class="n">MapPoint</span> <span class="ow">is</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">frustum</span> <span class="n">of</span> <span class="n">the</span> <span class="n">camera</span>
+<span class="o">//</span> <span class="ow">and</span> <span class="n">fill</span> <span class="n">variables</span> <span class="n">of</span> <span class="n">the</span> <span class="n">MapPoint</span> <span class="n">to</span> <span class="n">be</span> <span class="n">used</span> <span class="n">by</span> <span class="n">the</span> <span class="n">tracking</span>
+<span class="o">//</span> <span class="n">判断路标点是否在视野中</span>
+<span class="nb">bool</span> <span class="n">isInFrustum</span><span class="p">(</span><span class="n">MapPoint</span><span class="o">*</span> <span class="n">pMP</span><span class="p">,</span> <span class="nb">float</span> <span class="n">viewingCosLimit</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>判断关键点是否在grid中</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">Compute</span> <span class="n">the</span> <span class="n">cell</span> <span class="n">of</span> <span class="n">a</span> <span class="n">keypoint</span> <span class="p">(</span><span class="k">return</span> <span class="n">false</span> <span class="k">if</span> <span class="n">outside</span> <span class="n">the</span> <span class="n">grid</span><span class="p">)</span>
+<span class="nb">bool</span> <span class="n">PosInGrid</span><span class="p">(</span><span class="n">const</span> <span class="n">cv</span><span class="p">::</span><span class="n">KeyPoint</span> <span class="o">&amp;</span><span class="n">kp</span><span class="p">,</span> <span class="nb">int</span> <span class="o">&amp;</span><span class="n">posX</span><span class="p">,</span> <span class="nb">int</span> <span class="o">&amp;</span><span class="n">posY</span><span class="p">);</span>
+
+<span class="n">vector</span><span class="o">&lt;</span><span class="n">size_t</span><span class="o">&gt;</span> <span class="n">GetFeaturesInArea</span><span class="p">(</span><span class="n">const</span> <span class="nb">float</span> <span class="o">&amp;</span><span class="n">x</span><span class="p">,</span> <span class="n">const</span> <span class="nb">float</span>  <span class="o">&amp;</span><span class="n">y</span><span class="p">,</span> <span class="n">const</span> <span class="nb">float</span>  <span class="o">&amp;</span><span class="n">r</span><span class="p">,</span> <span class="n">const</span> <span class="nb">int</span> <span class="n">minLevel</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">const</span> <span class="nb">int</span> <span class="n">maxLevel</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="n">const</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>判断左右图关键点是否match,如果match,计算深度信息并将左右关键点坐标存储</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">Search</span> <span class="n">a</span> <span class="n">match</span> <span class="k">for</span> <span class="n">each</span> <span class="n">keypoint</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">left</span> <span class="n">image</span> <span class="n">to</span> <span class="n">a</span> <span class="n">keypoint</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">right</span> <span class="n">image</span><span class="o">.</span>
+<span class="o">//</span> <span class="n">If</span> <span class="n">there</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">match</span><span class="p">,</span> <span class="n">depth</span> <span class="ow">is</span> <span class="n">computed</span> <span class="ow">and</span> <span class="n">the</span> <span class="n">right</span> <span class="n">coordinate</span> <span class="n">associated</span> <span class="n">to</span> <span class="n">the</span> <span class="n">left</span> <span class="n">keypoint</span> <span class="ow">is</span> <span class="n">stored</span><span class="o">.</span>
+<span class="n">void</span> <span class="n">ComputeStereoMatches</span><span class="p">();</span>
+
+<span class="o">//</span> <span class="n">Associate</span> <span class="n">a</span> <span class="s2">&quot;right&quot;</span> <span class="n">coordinate</span> <span class="n">to</span> <span class="n">a</span> <span class="n">keypoint</span> <span class="k">if</span> <span class="n">there</span> <span class="ow">is</span> <span class="n">valid</span> <span class="n">depth</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">depthmap</span><span class="o">.</span>
+<span class="n">void</span> <span class="n">ComputeStereoFromRGBD</span><span class="p">(</span><span class="n">const</span> <span class="n">cv</span><span class="p">::</span><span class="n">Mat</span> <span class="o">&amp;</span><span class="n">imDepth</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>将一个关键点从映射到3D世界坐标</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">Backprojects</span> <span class="n">a</span> <span class="n">keypoint</span> <span class="p">(</span><span class="k">if</span> <span class="n">stereo</span><span class="o">/</span><span class="n">depth</span> <span class="n">info</span> <span class="n">available</span><span class="p">)</span> <span class="n">into</span> <span class="mi">3</span><span class="n">D</span> <span class="n">world</span> <span class="n">coordinates</span><span class="o">.</span>
+<span class="n">cv</span><span class="p">::</span><span class="n">Mat</span> <span class="n">UnprojectStereo</span><span class="p">(</span><span class="n">const</span> <span class="nb">int</span> <span class="o">&amp;</span><span class="n">i</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="3_keyframe.html" class="btn btn-neutral float-right" title="3.keyframe 关键帧" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="1initializer.html" class="btn btn-neutral" title="1.初始化Initializer.h" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, lijun.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

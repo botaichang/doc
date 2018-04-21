@@ -1,0 +1,398 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>1.初始化Initializer.h &mdash; vision 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="vision 1.0 documentation" href="../index.html"/>
+        <link rel="next" title="2.Frame帧类" href="2_frame.html"/>
+        <link rel="prev" title="vision workspace" href="../index.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> vision
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">1.初始化Initializer.h</a></li>
+<li class="toctree-l1"><a class="reference internal" href="2_frame.html">2.Frame帧类</a></li>
+<li class="toctree-l1"><a class="reference internal" href="3_keyframe.html">3.keyframe 关键帧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="4_keyframedatabase.html">4.KeyframeDatabase</a></li>
+<li class="toctree-l1"><a class="reference internal" href="5_mappoint.html">5.MapPoint 路标点,地图点</a></li>
+<li class="toctree-l1"><a class="reference internal" href="6_map.html">6.Map地图</a></li>
+<li class="toctree-l1"><a class="reference internal" href="7_orbextractor.html">7.ORBExtractor  ORB特征提取</a></li>
+<li class="toctree-l1"><a class="reference internal" href="8_orbmatcher.html">8.ORBmatcher ORB 特征匹配</a></li>
+<li class="toctree-l1"><a class="reference internal" href="9_framedrawer.html">9.FrameDrawer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="10_tracking.html">10. Tracking 跟踪</a></li>
+<li class="toctree-l1"><a class="reference internal" href="11_PnPsolver.html">11.PnPsolver</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">vision</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>1.初始化Initializer.h</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/source/1initializer.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="initializer-h">
+<h1>1.初始化Initializer.h<a class="headerlink" href="#initializer-h" title="Permalink to this headline">¶</a></h1>
+<p>构建Initializer的类
+该类主要完成的功能是：
+初始化SLAM的R,t,及点云，计算Fundamental,Homography,以及分解Fundamental 和Homography,存储当前帧与参考帧的关键点以及特征匹配。三角化方法等等。</p>
+<ul>
+<li><p class="first">1 .用reference frame来初始化，这个reference frame就是SLAM正式开始的第一帧</p>
+</li>
+<li><p class="first">2.用current frame,也就是用SLAM逻辑上的第二帧来初始化整个SLAM，得到最开始两帧之间的R t,以及点云</p>
+</li>
+<li><ol class="first arabic simple" start="3">
+<li>FindHomography</li>
+</ol>
+<p>假设场景为平面情况下通过前两帧求取Homography矩阵(current frame 2 到 reference frame 1),并得到该模型的评分</p>
+</li>
+<li><ol class="first arabic simple" start="4">
+<li>FindFundamental</li>
+</ol>
+<p>假设场景为非平面情况下通过前两帧求取Fundamental矩阵(current frame 2 到 reference frame 1),并得到该模型的评分</p>
+</li>
+<li><ol class="first arabic simple" start="5">
+<li>ComputeH21</li>
+</ol>
+<p>被FindHomography函数调用具体来算Homography矩阵</p>
+</li>
+<li><ol class="first arabic simple" start="6">
+<li>ComputeF21</li>
+</ol>
+<p>被FindFundamental函数调用具体来算Fundamental矩阵</p>
+</li>
+<li><ol class="first arabic simple" start="7">
+<li>CheckHomography</li>
+</ol>
+<p>被FindHomography函数调用，具体来算假设使用Homography模型的得分</p>
+</li>
+<li><p class="first">8.CheckFundamental</p>
+<p>被FindFundamental函数调用，具体来算假设使用Fundamental模型的得分</p>
+</li>
+<li><p class="first">9.ReconstructF</p>
+<p>分解F矩阵，并从分解后的多个解中找出合适的R，t</p>
+</li>
+<li><p class="first">10.ReconstructH</p>
+<p>分解H矩阵，并从分解后的多个解中找出合适的R，t</p>
+</li>
+<li><p class="first">11.Triangulate</p>
+<p>通过三角化方法，利用反投影矩阵将特征点恢复为3D点</p>
+</li>
+<li><p class="first">12.Normalize</p>
+<p>归一化三维空间点和帧间位移t</p>
+</li>
+<li><p class="first">13.CheckRT</p>
+<p>ReconstructF调用该函数进行cheirality check，从而进一步找出F分解后最合适的解</p>
+</li>
+<li><p class="first">14.DecomposeE</p>
+<p>F矩阵通过结合内参可以得到Essential矩阵，该函数用于分解E矩阵，将得到4组解</p>
+</li>
+<li><ol class="first arabic simple" start="15">
+<li>除了以上函数外，还有一些变量，主要用来存储参考帧和当前帧的特征点,以及记录匹配的点，相机内参，以及计算Fundamental 和Homography 矩阵时RANSAC迭代次数</li>
+</ol>
+<p>vector&lt;cv::KeyPoint&gt; mvKeys1; ///&lt; 存储Reference Frame中的特征点</p>
+<p>vector&lt;cv::KeyPoint&gt; mvKeys2; ///&lt; 存储Current Frame中的特征点</p>
+<p>vector&lt;Match&gt; mvMatches12; ///&lt; Match的数据结构是pair,mvMatches12只记录Reference到Current匹配上的特征点对
+vector&lt;bool&gt; mvbMatched1; ///&lt; 记录Reference Frame的每个特征点在Current Frame是否有匹配的特征点</p>
+<p>cv::Mat mK; ///&lt; 相机内参</p>
+<p>// Standard Deviation and Variance
+float mSigma, mSigma2; ///&lt; 测量误差</p>
+<p>// Ransac max iterations
+int mMaxIterations; ///&lt; 算Fundamental和Homography矩阵时RANSAC迭代次数</p>
+<p>// Ransac sets
+vector&lt;vector&lt;size_t&gt; &gt; mvSets; ///&lt; 二维容器，外层容器的大小为迭代次数，内层容器大小为每次迭代算H或F矩阵需要的点</p>
+</li>
+</ul>
+<div class="highlight-default"><div class="highlight"><pre><span></span>class Initializer
+{
+    typedef pair&lt;int,int&gt; Match;
+
+public:
+
+    // Fix the reference frame
+    // 用reference frame来初始化，这个reference frame就是SLAM正式开始的第一帧
+    Initializer(const Frame &amp;ReferenceFrame, float sigma = 1.0, int iterations = 200);
+
+    // Computes in parallel a fundamental matrix and a homography
+    // Selects a model and tries to recover the motion and the structure from motion
+    // 用current frame,也就是用SLAM逻辑上的第二帧来初始化整个SLAM，得到最开始两帧之间的R t,以及点云
+    bool Initialize(const Frame &amp;CurrentFrame, const vector&lt;int&gt; &amp;vMatches12,
+                    cv::Mat &amp;R21, cv::Mat &amp;t21, vector&lt;cv::Point3f&gt; &amp;vP3D, vector&lt;bool&gt; &amp;vbTriangulated);
+</pre></div>
+</div>
+<p>主要函数成员</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>private:
+
+    // 假设场景为平面情况下通过前两帧求取Homography矩阵(current frame 2 到 reference frame 1),并得到该模型的评分
+    void FindHomography(vector&lt;bool&gt; &amp;vbMatchesInliers, float &amp;score, cv::Mat &amp;H21);
+    // 假设场景为非平面情况下通过前两帧求取Fundamental矩阵(current frame 2 到 reference frame 1),并得到该模型的评分
+    void FindFundamental(vector&lt;bool&gt; &amp;vbInliers, float &amp;score, cv::Mat &amp;F21);
+
+    // 被FindHomography函数调用具体来算Homography矩阵
+    cv::Mat ComputeH21(const vector&lt;cv::Point2f&gt; &amp;vP1, const vector&lt;cv::Point2f&gt; &amp;vP2);
+    // 被FindFundamental函数调用具体来算Fundamental矩阵
+    cv::Mat ComputeF21(const vector&lt;cv::Point2f&gt; &amp;vP1, const vector&lt;cv::Point2f&gt; &amp;vP2);
+
+    // 被FindHomography函数调用，具体来算假设使用Homography模型的得分
+    float CheckHomography(const cv::Mat &amp;H21, const cv::Mat &amp;H12, vector&lt;bool&gt; &amp;vbMatchesInliers, float sigma);
+    // 被FindFundamental函数调用，具体来算假设使用Fundamental模型的得分
+    float CheckFundamental(const cv::Mat &amp;F21, vector&lt;bool&gt; &amp;vbMatchesInliers, float sigma);
+
+    // 分解F矩阵，并从分解后的多个解中找出合适的R，t
+    bool ReconstructF(vector&lt;bool&gt; &amp;vbMatchesInliers, cv::Mat &amp;F21, cv::Mat &amp;K,
+                      cv::Mat &amp;R21, cv::Mat &amp;t21, vector&lt;cv::Point3f&gt; &amp;vP3D, vector&lt;bool&gt; &amp;vbTriangulated, float minParallax, int minTriangulated);
+
+    // 分解H矩阵，并从分解后的多个解中找出合适的R，t
+    bool ReconstructH(vector&lt;bool&gt; &amp;vbMatchesInliers, cv::Mat &amp;H21, cv::Mat &amp;K,
+                      cv::Mat &amp;R21, cv::Mat &amp;t21, vector&lt;cv::Point3f&gt; &amp;vP3D, vector&lt;bool&gt; &amp;vbTriangulated, float minParallax, int minTriangulated);
+
+    // 通过三角化方法，利用反投影矩阵将特征点恢复为3D点
+    void Triangulate(const cv::KeyPoint &amp;kp1, const cv::KeyPoint &amp;kp2, const cv::Mat &amp;P1, const cv::Mat &amp;P2, cv::Mat &amp;x3D);
+
+    // 归一化三维空间点和帧间位移t
+    void Normalize(const vector&lt;cv::KeyPoint&gt; &amp;vKeys, vector&lt;cv::Point2f&gt; &amp;vNormalizedPoints, cv::Mat &amp;T);
+
+    // ReconstructF调用该函数进行cheirality check，从而进一步找出F分解后最合适的解
+    int CheckRT(const cv::Mat &amp;R, const cv::Mat &amp;t, const vector&lt;cv::KeyPoint&gt; &amp;vKeys1, const vector&lt;cv::KeyPoint&gt; &amp;vKeys2,
+                       const vector&lt;Match&gt; &amp;vMatches12, vector&lt;bool&gt; &amp;vbInliers,
+                       const cv::Mat &amp;K, vector&lt;cv::Point3f&gt; &amp;vP3D, float th2, vector&lt;bool&gt; &amp;vbGood, float &amp;parallax);
+
+    // F矩阵通过结合内参可以得到Essential矩阵，该函数用于分解E矩阵，将得到4组解
+    void DecomposeE(const cv::Mat &amp;E, cv::Mat &amp;R1, cv::Mat &amp;R2, cv::Mat &amp;t);
+
+
+    // Keypoints from Reference Frame (Frame 1)
+    vector&lt;cv::KeyPoint&gt; mvKeys1; ///&lt; 存储Reference Frame中的特征点
+
+    // Keypoints from Current Frame (Frame 2)
+    vector&lt;cv::KeyPoint&gt; mvKeys2; ///&lt; 存储Current Frame中的特征点
+
+    // Current Matches from Reference to Current
+    // Reference Frame: 1, Current Frame: 2
+    vector&lt;Match&gt; mvMatches12; ///&lt; Match的数据结构是pair,mvMatches12只记录Reference到Current匹配上的特征点对
+    vector&lt;bool&gt; mvbMatched1; ///&lt; 记录Reference Frame的每个特征点在Current Frame是否有匹配的特征点
+
+    // Calibration
+    cv::Mat mK; ///&lt; 相机内参
+
+    // Standard Deviation and Variance
+    float mSigma, mSigma2; ///&lt; 测量误差
+
+    // Ransac max iterations
+    int mMaxIterations; ///&lt; 算Fundamental和Homography矩阵时RANSAC迭代次数
+
+    // Ransac sets
+    vector&lt;vector&lt;size_t&gt; &gt; mvSets; ///&lt; 二维容器，外层容器的大小为迭代次数，内层容器大小为每次迭代算H或F矩阵需要的点
+
+};
+</pre></div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="2_frame.html" class="btn btn-neutral float-right" title="2.Frame帧类" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../index.html" class="btn btn-neutral" title="vision workspace" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, lijun.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

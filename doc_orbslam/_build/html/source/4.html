@@ -1,0 +1,562 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Global Memory &mdash; cuda 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="cuda 1.0 documentation" href="../index.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> cuda
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="1.html">CUDA Program Structure</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">cuda</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Global Memory</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/source/4.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="global-memory">
+<h1>Global Memory<a class="headerlink" href="#global-memory" title="Permalink to this headline">¶</a></h1>
+<p>This Chapter will explain the CUDA memory model and,by analyzing different global memory access patterns, teach you how to use global memory efficiently from your kernel.</p>
+<div class="section" id="memory-hierarchy">
+<h2>Memory Hierarchy<a class="headerlink" href="#memory-hierarchy" title="Permalink to this headline">¶</a></h2>
+<p>In general, applications do not access arbitrary data or run arbitrary code at any point-in-time.  Instead, applications often follow the principle of locality, which suggests that they access a relatively small and localized portion of their address space at any point-in-time. There are two different types of locality:
+➤ Temporal locality (locality in time)
+➤ Spatial locality (locality in space)
+Temporal locality assumes that if a data location is referenced, then it is more likely to be referenced again within a short time period and less likely to be referenced as more and more time passes.  Spatial locality assumes that if a memory location is referenced, nearby locations are likely to be referenced as well.</p>
+<img alt="../_images/memory_hierarchy.png" src="../_images/memory_hierarchy.png" />
+<p>Main memory for both CPUs and GPUs is implemented using DRAM (Dynamic Random Access Memory), while lower-latency memory (such as CPU L1 cache) is implemented using SRAM (Static Random Access Memory). The largest and slowest level in the memory hierarchy is generally implemented using a magnetic disk or flash drive. In this memory hierarchy, data is either kept in lowlatency, low-capacity memory when it is actively being used by the processor, or in high-latency, high-capacity memory when it is being stored for later use. This memory hierarchy can provide the illusion of large but low-latency memory.</p>
+<p>To programmers, there are generally two classifications of memory:
+➤ Programmable: You explicitly control what data is placed in programmable memory.
+➤ Non-programmable: You have no control over data placement, and rely on automatic techniques to achieve good performance.</p>
+<p>In the CPU memory hierarchy, L1 cache and L2 cache are examples of non-programmable memory.
+On the other hand, the CUDA memory model exposes many types of programmable memory to you:</p>
+<p>➤ Registers</p>
+<p>➤ Shared memory</p>
+<p>➤ Local memory</p>
+<p>➤ Constant memory</p>
+<p>➤ Texture memory</p>
+<p>➤ Global memory</p>
+<p>Figure below illustrates the hierarchy of these memory spaces. Each has a different scope, lifetime, and caching behavior. A thread in a kernel has its own private local memory. A thread block has its own shared memory, visible to all threads in the same thread block, and whose contents persist for the lifetime of the thread block. All threads can access global memory. There are also two read-only memory spaces accessible by all threads: the constant and texture memory spaces. The global, constant, and texture memory spaces are optimized for different uses. Texture memory offers different address modes and filtering for various data layouts. The contents of global, constant, and texture memory have the same lifetime as an application.</p>
+<img alt="../_images/cuda_mem.png" src="../_images/cuda_mem.png" />
+</div>
+<div class="section" id="memory-access-example">
+<h2>Memory access example<a class="headerlink" href="#memory-access-example" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">#include &lt;cuda_runtime.h&gt;</span>
+<span class="c1">#include &lt;stdio.h&gt;</span>
+
+<span class="o">/*</span>
+ <span class="o">*</span> <span class="n">An</span> <span class="n">example</span> <span class="n">of</span> <span class="n">using</span> <span class="n">a</span> <span class="n">statically</span> <span class="n">declared</span> <span class="k">global</span> <span class="n">variable</span> <span class="p">(</span><span class="n">devData</span><span class="p">)</span> <span class="n">to</span> <span class="n">store</span>
+ <span class="o">*</span> <span class="n">a</span> <span class="n">floating</span><span class="o">-</span><span class="n">point</span> <span class="n">value</span> <span class="n">on</span> <span class="n">the</span> <span class="n">device</span><span class="o">.</span>
+ <span class="o">*/</span>
+
+<span class="n">__device__</span> <span class="nb">float</span> <span class="n">devData</span><span class="p">;</span>
+
+<span class="n">__global__</span> <span class="n">void</span> <span class="n">checkGlobalVariable</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="o">//</span> <span class="n">display</span> <span class="n">the</span> <span class="n">original</span> <span class="n">value</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Device: the value of the global variable is </span><span class="si">%f</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">devData</span><span class="p">);</span>
+
+    <span class="o">//</span> <span class="n">alter</span> <span class="n">the</span> <span class="n">value</span>
+    <span class="n">devData</span> <span class="o">+=</span> <span class="mf">2.0</span><span class="n">f</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nb">int</span> <span class="n">main</span><span class="p">(</span><span class="n">void</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="o">//</span> <span class="n">initialize</span> <span class="n">the</span> <span class="k">global</span> <span class="n">variable</span>
+    <span class="nb">float</span> <span class="n">value</span> <span class="o">=</span> <span class="mf">3.14</span><span class="n">f</span><span class="p">;</span>
+    <span class="n">CHECK</span><span class="p">(</span><span class="n">cudaMemcpyToSymbol</span><span class="p">(</span><span class="n">devData</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">value</span><span class="p">,</span> <span class="n">sizeof</span><span class="p">(</span><span class="nb">float</span><span class="p">)));</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Host:   copied </span><span class="si">%f</span><span class="s2"> to the global variable</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">);</span>
+
+    <span class="o">//</span> <span class="n">invoke</span> <span class="n">the</span> <span class="n">kernel</span>
+    <span class="n">checkGlobalVariable</span><span class="o">&lt;&lt;&lt;</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="o">&gt;&gt;&gt;</span><span class="p">();</span>
+
+    <span class="o">//</span> <span class="n">copy</span> <span class="n">the</span> <span class="k">global</span> <span class="n">variable</span> <span class="n">back</span> <span class="n">to</span> <span class="n">the</span> <span class="n">host</span>
+    <span class="n">CHECK</span><span class="p">(</span><span class="n">cudaMemcpyFromSymbol</span><span class="p">(</span><span class="o">&amp;</span><span class="n">value</span><span class="p">,</span> <span class="n">devData</span><span class="p">,</span> <span class="n">sizeof</span><span class="p">(</span><span class="nb">float</span><span class="p">)));</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Host:   the value changed by the kernel to </span><span class="si">%f</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">);</span>
+
+    <span class="n">CHECK</span><span class="p">(</span><span class="n">cudaDeviceReset</span><span class="p">());</span>
+    <span class="k">return</span> <span class="n">EXIT_SUCCESS</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="memory-management">
+<h2>Memory Management<a class="headerlink" href="#memory-management" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="memory-allocation-and-deallocation">
+<h2>Memory allocation and deallocation<a class="headerlink" href="#memory-allocation-and-deallocation" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">cudaError_t</span> <span class="n">cudaMalloc</span><span class="p">(</span><span class="n">void</span> <span class="o">**</span><span class="n">devPtr</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">count</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>This function allocates count bytes of global memory on the device and returns the location of
+that memory in pointer devPtr. The allocated memory is suitably aligned for any variable type, including integers, floating-point values, booleans, and so on.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">cudaError_t</span> <span class="n">cudaMemset</span><span class="p">(</span><span class="n">void</span> <span class="o">*</span><span class="n">devPtr</span><span class="p">,</span> <span class="nb">int</span> <span class="n">value</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">count</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>This function fills each of the count bytes starting at the device memory address devPtr with the value stored in the variable value.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">cudaError_t</span> <span class="n">cudaFree</span><span class="p">(</span><span class="n">void</span> <span class="o">*</span><span class="n">devPtr</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>This function frees the global memory pointed to by devPtr, which must have been previously allocated using a device allocation function (such as cudaMalloc). Otherwise, it returns an error cudaErrorInvalidDevicePointer. cudaFree also returns an error if the address has already been freed.</p>
+<ul class="simple">
+<li>Device memory allocation and deallocation are expensive operations, so device memory should be reused by applications whenever possible to minimize the impact on overall performance.</li>
+</ul>
+</div>
+<div class="section" id="memory-transfer">
+<h2>Memory Transfer<a class="headerlink" href="#memory-transfer" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">cudaError_t</span> <span class="n">cudaMemcpy</span><span class="p">(</span><span class="n">void</span> <span class="o">*</span><span class="n">dst</span><span class="p">,</span> <span class="n">const</span> <span class="n">void</span> <span class="o">*</span><span class="n">src</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">count</span><span class="p">,</span> <span class="n">enum</span> <span class="n">cudaMemcpyKind</span> <span class="n">kind</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>This function copies count bytes from the memory location src to the memory location dst. The variable kind specifies the direction of the copy and can have the following values:</p>
+<ul class="simple">
+<li>cudaMemcpyHostToHost</li>
+<li>cudaMemcpyHostToDevice</li>
+<li>cudaMemcpyDeviceToHost</li>
+<li>cudaMemcpyDeviceToDevice</li>
+</ul>
+<p>If the pointers dst and src do not match the direction of the copy specified by kind, the behavior of cudaMemcpy is undefined. This function exhibits synchronous behavior in most cases.</p>
+<p>memTransfer.cu</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">#include &quot;../common/common.h&quot;</span>
+<span class="c1">#include &lt;cuda_runtime.h&gt;</span>
+<span class="c1">#include &lt;stdio.h&gt;</span>
+
+<span class="o">/*</span>
+ <span class="o">*</span> <span class="n">An</span> <span class="n">example</span> <span class="n">of</span> <span class="n">using</span> <span class="n">CUDA</span><span class="s1">&#39;s memory copy API to transfer data to and from the</span>
+ <span class="o">*</span> <span class="n">device</span><span class="o">.</span> <span class="n">In</span> <span class="n">this</span> <span class="n">case</span><span class="p">,</span> <span class="n">cudaMalloc</span> <span class="ow">is</span> <span class="n">used</span> <span class="n">to</span> <span class="n">allocate</span> <span class="n">memory</span> <span class="n">on</span> <span class="n">the</span> <span class="n">GPU</span> <span class="ow">and</span>
+ <span class="o">*</span> <span class="n">cudaMemcpy</span> <span class="ow">is</span> <span class="n">used</span> <span class="n">to</span> <span class="n">transfer</span> <span class="n">the</span> <span class="n">contents</span> <span class="n">of</span> <span class="n">host</span> <span class="n">memory</span> <span class="n">to</span> <span class="n">an</span> <span class="n">array</span>
+ <span class="o">*</span> <span class="n">allocated</span> <span class="n">using</span> <span class="n">cudaMalloc</span><span class="o">.</span>
+ <span class="o">*/</span>
+
+<span class="nb">int</span> <span class="n">main</span><span class="p">(</span><span class="nb">int</span> <span class="n">argc</span><span class="p">,</span> <span class="n">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="o">//</span> <span class="nb">set</span> <span class="n">up</span> <span class="n">device</span>
+    <span class="nb">int</span> <span class="n">dev</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">CHECK</span><span class="p">(</span><span class="n">cudaSetDevice</span><span class="p">(</span><span class="n">dev</span><span class="p">));</span>
+
+    <span class="o">//</span> <span class="n">memory</span> <span class="n">size</span>
+    <span class="n">unsigned</span> <span class="nb">int</span> <span class="n">isize</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">22</span><span class="p">;</span>
+    <span class="n">unsigned</span> <span class="nb">int</span> <span class="n">nbytes</span> <span class="o">=</span> <span class="n">isize</span> <span class="o">*</span> <span class="n">sizeof</span><span class="p">(</span><span class="nb">float</span><span class="p">);</span>
+
+    <span class="o">//</span> <span class="n">get</span> <span class="n">device</span> <span class="n">information</span>
+    <span class="n">cudaDeviceProp</span> <span class="n">deviceProp</span><span class="p">;</span>
+    <span class="n">CHECK</span><span class="p">(</span><span class="n">cudaGetDeviceProperties</span><span class="p">(</span><span class="o">&amp;</span><span class="n">deviceProp</span><span class="p">,</span> <span class="n">dev</span><span class="p">));</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> starting at &quot;</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;device </span><span class="si">%d</span><span class="s2">: </span><span class="si">%s</span><span class="s2"> memory size </span><span class="si">%d</span><span class="s2"> nbyte </span><span class="si">%5.2f</span><span class="s2">MB</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">dev</span><span class="p">,</span>
+           <span class="n">deviceProp</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">isize</span><span class="p">,</span> <span class="n">nbytes</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1024.0</span><span class="n">f</span> <span class="o">*</span> <span class="mf">1024.0</span><span class="n">f</span><span class="p">));</span>
+
+    <span class="o">//</span> <span class="n">allocate</span> <span class="n">the</span> <span class="n">host</span> <span class="n">memory</span>
+    <span class="nb">float</span> <span class="o">*</span><span class="n">h_a</span> <span class="o">=</span> <span class="p">(</span><span class="nb">float</span> <span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="n">nbytes</span><span class="p">);</span>
+
+    <span class="o">//</span> <span class="n">allocate</span> <span class="n">the</span> <span class="n">device</span> <span class="n">memory</span>
+    <span class="nb">float</span> <span class="o">*</span><span class="n">d_a</span><span class="p">;</span>
+    <span class="n">CHECK</span><span class="p">(</span><span class="n">cudaMalloc</span><span class="p">((</span><span class="nb">float</span> <span class="o">**</span><span class="p">)</span><span class="o">&amp;</span><span class="n">d_a</span><span class="p">,</span> <span class="n">nbytes</span><span class="p">));</span>
+
+    <span class="o">//</span> <span class="n">initialize</span> <span class="n">the</span> <span class="n">host</span> <span class="n">memory</span>
+    <span class="k">for</span><span class="p">(</span><span class="n">unsigned</span> <span class="nb">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">isize</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="n">h_a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span><span class="n">f</span><span class="p">;</span>
+
+    <span class="o">//</span> <span class="n">transfer</span> <span class="n">data</span> <span class="kn">from</span> <span class="nn">the</span> <span class="n">host</span> <span class="n">to</span> <span class="n">the</span> <span class="n">device</span>
+    <span class="n">CHECK</span><span class="p">(</span><span class="n">cudaMemcpy</span><span class="p">(</span><span class="n">d_a</span><span class="p">,</span> <span class="n">h_a</span><span class="p">,</span> <span class="n">nbytes</span><span class="p">,</span> <span class="n">cudaMemcpyHostToDevice</span><span class="p">));</span>
+
+    <span class="o">//</span> <span class="n">transfer</span> <span class="n">data</span> <span class="kn">from</span> <span class="nn">the</span> <span class="n">device</span> <span class="n">to</span> <span class="n">the</span> <span class="n">host</span>
+    <span class="n">CHECK</span><span class="p">(</span><span class="n">cudaMemcpy</span><span class="p">(</span><span class="n">h_a</span><span class="p">,</span> <span class="n">d_a</span><span class="p">,</span> <span class="n">nbytes</span><span class="p">,</span> <span class="n">cudaMemcpyDeviceToHost</span><span class="p">));</span>
+
+    <span class="o">//</span> <span class="n">free</span> <span class="n">memory</span>
+    <span class="n">CHECK</span><span class="p">(</span><span class="n">cudaFree</span><span class="p">(</span><span class="n">d_a</span><span class="p">));</span>
+    <span class="n">free</span><span class="p">(</span><span class="n">h_a</span><span class="p">);</span>
+
+    <span class="o">//</span> <span class="n">reset</span> <span class="n">device</span>
+    <span class="n">CHECK</span><span class="p">(</span><span class="n">cudaDeviceReset</span><span class="p">());</span>
+    <span class="k">return</span> <span class="n">EXIT_SUCCESS</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>nvcc memTransfer.cu -o memTransfer</p>
+<p>nvprof ./memTransfer</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">==</span><span class="mi">31873</span><span class="o">==</span> <span class="n">NVPROF</span> <span class="ow">is</span> <span class="n">profiling</span> <span class="n">process</span> <span class="mi">31873</span><span class="p">,</span> <span class="n">command</span><span class="p">:</span> <span class="o">./</span><span class="n">memTransfer</span>
+<span class="o">./</span><span class="n">memTransfer</span> <span class="n">starting</span> <span class="n">at</span> <span class="n">device</span> <span class="mi">0</span><span class="p">:</span> <span class="n">GeForce</span> <span class="n">GTX</span> <span class="mi">1080</span> <span class="n">memory</span> <span class="n">size</span> <span class="mi">4194304</span> <span class="n">nbyte</span> <span class="mf">16.00</span><span class="n">MB</span>
+<span class="o">==</span><span class="mi">31873</span><span class="o">==</span> <span class="n">Profiling</span> <span class="n">application</span><span class="p">:</span> <span class="o">./</span><span class="n">memTransfer</span>
+<span class="o">==</span><span class="mi">31873</span><span class="o">==</span> <span class="n">Profiling</span> <span class="n">result</span><span class="p">:</span>
+<span class="n">Time</span><span class="p">(</span><span class="o">%</span><span class="p">)</span>      <span class="n">Time</span>     <span class="n">Calls</span>       <span class="n">Avg</span>       <span class="n">Min</span>       <span class="n">Max</span>  <span class="n">Name</span>
+ <span class="mf">55.46</span><span class="o">%</span>  <span class="mf">2.3872</span><span class="n">ms</span>         <span class="mi">1</span>  <span class="mf">2.3872</span><span class="n">ms</span>  <span class="mf">2.3872</span><span class="n">ms</span>  <span class="mf">2.3872</span><span class="n">ms</span>  <span class="p">[</span><span class="n">CUDA</span> <span class="n">memcpy</span> <span class="n">HtoD</span><span class="p">]</span>
+ <span class="mf">44.54</span><span class="o">%</span>  <span class="mf">1.9173</span><span class="n">ms</span>         <span class="mi">1</span>  <span class="mf">1.9173</span><span class="n">ms</span>  <span class="mf">1.9173</span><span class="n">ms</span>  <span class="mf">1.9173</span><span class="n">ms</span>  <span class="p">[</span><span class="n">CUDA</span> <span class="n">memcpy</span> <span class="n">DtoH</span><span class="p">]</span>
+
+<span class="o">==</span><span class="mi">31873</span><span class="o">==</span> <span class="n">API</span> <span class="n">calls</span><span class="p">:</span>
+<span class="n">Time</span><span class="p">(</span><span class="o">%</span><span class="p">)</span>      <span class="n">Time</span>     <span class="n">Calls</span>       <span class="n">Avg</span>       <span class="n">Min</span>       <span class="n">Max</span>  <span class="n">Name</span>
+ <span class="mf">65.49</span><span class="o">%</span>  <span class="mf">124.62</span><span class="n">ms</span>         <span class="mi">1</span>  <span class="mf">124.62</span><span class="n">ms</span>  <span class="mf">124.62</span><span class="n">ms</span>  <span class="mf">124.62</span><span class="n">ms</span>  <span class="n">cudaMalloc</span>
+ <span class="mf">31.70</span><span class="o">%</span>  <span class="mf">60.327</span><span class="n">ms</span>         <span class="mi">1</span>  <span class="mf">60.327</span><span class="n">ms</span>  <span class="mf">60.327</span><span class="n">ms</span>  <span class="mf">60.327</span><span class="n">ms</span>  <span class="n">cudaDeviceReset</span>
+  <span class="mf">2.40</span><span class="o">%</span>  <span class="mf">4.5757</span><span class="n">ms</span>         <span class="mi">2</span>  <span class="mf">2.2879</span><span class="n">ms</span>  <span class="mf">2.1232</span><span class="n">ms</span>  <span class="mf">2.4526</span><span class="n">ms</span>  <span class="n">cudaMemcpy</span>
+  <span class="mf">0.15</span><span class="o">%</span>  <span class="mf">289.67</span><span class="n">us</span>        <span class="mi">91</span>  <span class="mf">3.1830</span><span class="n">us</span>     <span class="mi">103</span><span class="n">ns</span>  <span class="mf">154.77</span><span class="n">us</span>  <span class="n">cuDeviceGetAttribute</span>
+  <span class="mf">0.10</span><span class="o">%</span>  <span class="mf">189.81</span><span class="n">us</span>         <span class="mi">1</span>  <span class="mf">189.81</span><span class="n">us</span>  <span class="mf">189.81</span><span class="n">us</span>  <span class="mf">189.81</span><span class="n">us</span>  <span class="n">cudaGetDeviceProperties</span>
+  <span class="mf">0.09</span><span class="o">%</span>  <span class="mf">176.18</span><span class="n">us</span>         <span class="mi">1</span>  <span class="mf">176.18</span><span class="n">us</span>  <span class="mf">176.18</span><span class="n">us</span>  <span class="mf">176.18</span><span class="n">us</span>  <span class="n">cuDeviceTotalMem</span>
+  <span class="mf">0.05</span><span class="o">%</span>  <span class="mf">91.804</span><span class="n">us</span>         <span class="mi">1</span>  <span class="mf">91.804</span><span class="n">us</span>  <span class="mf">91.804</span><span class="n">us</span>  <span class="mf">91.804</span><span class="n">us</span>  <span class="n">cudaFree</span>
+  <span class="mf">0.01</span><span class="o">%</span>  <span class="mf">23.028</span><span class="n">us</span>         <span class="mi">1</span>  <span class="mf">23.028</span><span class="n">us</span>  <span class="mf">23.028</span><span class="n">us</span>  <span class="mf">23.028</span><span class="n">us</span>  <span class="n">cuDeviceGetName</span>
+  <span class="mf">0.00</span><span class="o">%</span>  <span class="mf">4.2220</span><span class="n">us</span>         <span class="mi">1</span>  <span class="mf">4.2220</span><span class="n">us</span>  <span class="mf">4.2220</span><span class="n">us</span>  <span class="mf">4.2220</span><span class="n">us</span>  <span class="n">cudaSetDevice</span>
+  <span class="mf">0.00</span><span class="o">%</span>  <span class="mf">1.3070</span><span class="n">us</span>         <span class="mi">3</span>     <span class="mi">435</span><span class="n">ns</span>     <span class="mi">110</span><span class="n">ns</span>     <span class="mi">886</span><span class="n">ns</span>  <span class="n">cuDeviceGetCount</span>
+  <span class="mf">0.00</span><span class="o">%</span>     <span class="mi">757</span><span class="n">ns</span>         <span class="mi">3</span>     <span class="mi">252</span><span class="n">ns</span>     <span class="mi">166</span><span class="n">ns</span>     <span class="mi">370</span><span class="n">ns</span>  <span class="n">cuDeviceGet</span>
+</pre></div>
+</div>
+<p>从时间分析上看到，cudaMalloc占用了最多的时间．</p>
+<img alt="../_images/mem_transfer.png" src="../_images/mem_transfer.png" />
+</div>
+<div class="section" id="pinned-memory">
+<h2>Pinned memory锁定内存<a class="headerlink" href="#pinned-memory" title="Permalink to this headline">¶</a></h2>
+<p>使用锁定内存减少cuda程序主机内存与设备内存通信时间
+- Allocated host memory is by default pageable, that is, subject to page fault operations that move data in host virtual memory to different physical locations as directed by the operating system.
+- Virtual memory offers the illusion of much more main memory than is physically available, just as the L1 cache offers the illusion of much more on-chip memory than is physically available.</p>
+<ul class="simple">
+<li>The GPU cannot safely access data in pageable host memory because it has no control over when the host operating system may choose to physically move that data.</li>
+<li>When transferring data from pageable host memory to device memory, the CUDA driver first allocates temporary page-locked or pinned host memory, copies the source host data to pinned memory, and then transfers the data from pinned memory to device memory</li>
+</ul>
+<p>当为了提高CUDA程序的主机内存和设备内存传输消耗时，可以尝试一下两种方案</p>
+<ul class="simple">
+<li>一：使用分页锁定内存，分页锁定内存和显存之间的拷贝速度大约是6GB/s，普通的分页内存和GPU间的速度大约是3GB/s，（另外：GPU内存间速度是30G,CPU间内存速度是10GB/s），但是这种方法会带来额外的cpu内存间的拷贝时间</li>
+<li>二：使用内存映射（Zero Copy）让GPU直接使用CPU的内存，减少主机和设备间内存传输的时间，但是这种方法对于2.2以后的cuda版本未必管用 最好办法是通过实验对比方案一和二是否取得效果。</li>
+</ul>
+<img alt="../_images/pinned_memory.png" src="../_images/pinned_memory.png" />
+<p>Pinned host memory must be freed with:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">cudaError_t</span> <span class="n">cudaFreeHost</span><span class="p">(</span><span class="n">void</span> <span class="o">*</span><span class="n">ptr</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>pinnedmemTransfer.cu</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>#include &quot;../common/common.h&quot;
+#include &lt;cuda_runtime.h&gt;
+#include &lt;stdio.h&gt;
+
+/*
+ * An example of using CUDA&#39;s memory copy API to transfer data to and from the
+ * device. In this case, cudaMalloc is used to allocate memory on the GPU and
+ * cudaMemcpy is used to transfer the contents of host memory to an array
+ * allocated using cudaMalloc. Host memory is allocated using cudaMallocHost to
+ * create a page-locked host array.
+ */
+
+int main(int argc, char **argv)
+{
+    // set up device
+    int dev = 0;
+    CHECK(cudaSetDevice(dev));
+
+    // memory size
+    unsigned int isize = 1 &lt;&lt; 22;
+    unsigned int nbytes = isize * sizeof(float);
+
+    // get device information
+    cudaDeviceProp deviceProp;
+    CHECK(cudaGetDeviceProperties(&amp;deviceProp, dev));
+
+    if (!deviceProp.canMapHostMemory)
+    {
+        printf(&quot;Device %d does not support mapping CPU host memory!\n&quot;, dev);
+        CHECK(cudaDeviceReset());
+        exit(EXIT_SUCCESS);
+    }
+
+    printf(&quot;%s starting at &quot;, argv[0]);
+    printf(&quot;device %d: %s memory size %d nbyte %5.2fMB canMap %d\n&quot;, dev,
+           deviceProp.name, isize, nbytes / (1024.0f * 1024.0f),
+           deviceProp.canMapHostMemory);
+
+    // allocate pinned host memory
+    float *h_a;
+    CHECK(cudaMallocHost ((float **)&amp;h_a, nbytes));
+
+    // allocate device memory
+    float *d_a;
+    CHECK(cudaMalloc((float **)&amp;d_a, nbytes));
+
+    // initialize host memory
+    memset(h_a, 0, nbytes);
+
+    for (int i = 0; i &lt; isize; i++) h_a[i] = 100.10f;
+
+    // transfer data from the host to the device
+    CHECK(cudaMemcpy(d_a, h_a, nbytes, cudaMemcpyHostToDevice));
+
+    // transfer data from the device to the host
+    CHECK(cudaMemcpy(h_a, d_a, nbytes, cudaMemcpyDeviceToHost));
+
+    // free memory
+    CHECK(cudaFree(d_a));
+    CHECK(cudaFreeHost(h_a));
+
+    // reset device
+    CHECK(cudaDeviceReset());
+    return EXIT_SUCCESS;
+}
+</pre></div>
+</div>
+<p>nvcc pinnedmemTransfer.cu -o pinnedmemTransfer</p>
+<p>nvprof ./pinnedmemTransfer</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">==</span><span class="mi">700</span><span class="o">==</span> <span class="n">NVPROF</span> <span class="ow">is</span> <span class="n">profiling</span> <span class="n">process</span> <span class="mi">700</span><span class="p">,</span> <span class="n">command</span><span class="p">:</span> <span class="o">./</span><span class="n">pinMemTransfer</span>
+<span class="o">./</span><span class="n">pinMemTransfer</span> <span class="n">starting</span> <span class="n">at</span> <span class="n">device</span> <span class="mi">0</span><span class="p">:</span> <span class="n">GeForce</span> <span class="n">GTX</span> <span class="mi">1080</span> <span class="n">memory</span> <span class="n">size</span> <span class="mi">4194304</span> <span class="n">nbyte</span> <span class="mf">16.00</span><span class="n">MB</span> <span class="n">canMap</span> <span class="mi">1</span>
+<span class="o">==</span><span class="mi">700</span><span class="o">==</span> <span class="n">Profiling</span> <span class="n">application</span><span class="p">:</span> <span class="o">./</span><span class="n">pinMemTransfer</span>
+<span class="o">==</span><span class="mi">700</span><span class="o">==</span> <span class="n">Profiling</span> <span class="n">result</span><span class="p">:</span>
+<span class="n">Time</span><span class="p">(</span><span class="o">%</span><span class="p">)</span>      <span class="n">Time</span>     <span class="n">Calls</span>       <span class="n">Avg</span>       <span class="n">Min</span>       <span class="n">Max</span>  <span class="n">Name</span>
+ <span class="mf">51.35</span><span class="o">%</span>  <span class="mf">1.3991</span><span class="n">ms</span>         <span class="mi">1</span>  <span class="mf">1.3991</span><span class="n">ms</span>  <span class="mf">1.3991</span><span class="n">ms</span>  <span class="mf">1.3991</span><span class="n">ms</span>  <span class="p">[</span><span class="n">CUDA</span> <span class="n">memcpy</span> <span class="n">HtoD</span><span class="p">]</span>
+ <span class="mf">48.65</span><span class="o">%</span>  <span class="mf">1.3256</span><span class="n">ms</span>         <span class="mi">1</span>  <span class="mf">1.3256</span><span class="n">ms</span>  <span class="mf">1.3256</span><span class="n">ms</span>  <span class="mf">1.3256</span><span class="n">ms</span>  <span class="p">[</span><span class="n">CUDA</span> <span class="n">memcpy</span> <span class="n">DtoH</span><span class="p">]</span>
+
+<span class="o">==</span><span class="mi">700</span><span class="o">==</span> <span class="n">API</span> <span class="n">calls</span><span class="p">:</span>
+<span class="n">Time</span><span class="p">(</span><span class="o">%</span><span class="p">)</span>      <span class="n">Time</span>     <span class="n">Calls</span>       <span class="n">Avg</span>       <span class="n">Min</span>       <span class="n">Max</span>  <span class="n">Name</span>
+ <span class="mf">65.49</span><span class="o">%</span>  <span class="mf">129.60</span><span class="n">ms</span>         <span class="mi">1</span>  <span class="mf">129.60</span><span class="n">ms</span>  <span class="mf">129.60</span><span class="n">ms</span>  <span class="mf">129.60</span><span class="n">ms</span>  <span class="n">cudaHostAlloc</span>
+ <span class="mf">31.73</span><span class="o">%</span>  <span class="mf">62.778</span><span class="n">ms</span>         <span class="mi">1</span>  <span class="mf">62.778</span><span class="n">ms</span>  <span class="mf">62.778</span><span class="n">ms</span>  <span class="mf">62.778</span><span class="n">ms</span>  <span class="n">cudaDeviceReset</span>
+  <span class="mf">1.56</span><span class="o">%</span>  <span class="mf">3.0775</span><span class="n">ms</span>         <span class="mi">2</span>  <span class="mf">1.5387</span><span class="n">ms</span>  <span class="mf">1.4614</span><span class="n">ms</span>  <span class="mf">1.6161</span><span class="n">ms</span>  <span class="n">cudaMemcpy</span>
+  <span class="mf">0.74</span><span class="o">%</span>  <span class="mf">1.4723</span><span class="n">ms</span>         <span class="mi">1</span>  <span class="mf">1.4723</span><span class="n">ms</span>  <span class="mf">1.4723</span><span class="n">ms</span>  <span class="mf">1.4723</span><span class="n">ms</span>  <span class="n">cudaFreeHost</span>
+  <span class="mf">0.11</span><span class="o">%</span>  <span class="mf">221.32</span><span class="n">us</span>        <span class="mi">91</span>  <span class="mf">2.4320</span><span class="n">us</span>     <span class="mi">103</span><span class="n">ns</span>  <span class="mf">87.271</span><span class="n">us</span>  <span class="n">cuDeviceGetAttribute</span>
+  <span class="mf">0.10</span><span class="o">%</span>  <span class="mf">200.53</span><span class="n">us</span>         <span class="mi">1</span>  <span class="mf">200.53</span><span class="n">us</span>  <span class="mf">200.53</span><span class="n">us</span>  <span class="mf">200.53</span><span class="n">us</span>  <span class="n">cudaMalloc</span>
+  <span class="mf">0.10</span><span class="o">%</span>  <span class="mf">190.88</span><span class="n">us</span>         <span class="mi">1</span>  <span class="mf">190.88</span><span class="n">us</span>  <span class="mf">190.88</span><span class="n">us</span>  <span class="mf">190.88</span><span class="n">us</span>  <span class="n">cudaGetDeviceProperties</span>
+  <span class="mf">0.09</span><span class="o">%</span>  <span class="mf">173.98</span><span class="n">us</span>         <span class="mi">1</span>  <span class="mf">173.98</span><span class="n">us</span>  <span class="mf">173.98</span><span class="n">us</span>  <span class="mf">173.98</span><span class="n">us</span>  <span class="n">cuDeviceTotalMem</span>
+  <span class="mf">0.07</span><span class="o">%</span>  <span class="mf">136.38</span><span class="n">us</span>         <span class="mi">1</span>  <span class="mf">136.38</span><span class="n">us</span>  <span class="mf">136.38</span><span class="n">us</span>  <span class="mf">136.38</span><span class="n">us</span>  <span class="n">cudaFree</span>
+  <span class="mf">0.01</span><span class="o">%</span>  <span class="mf">22.984</span><span class="n">us</span>         <span class="mi">1</span>  <span class="mf">22.984</span><span class="n">us</span>  <span class="mf">22.984</span><span class="n">us</span>  <span class="mf">22.984</span><span class="n">us</span>  <span class="n">cuDeviceGetName</span>
+  <span class="mf">0.00</span><span class="o">%</span>  <span class="mf">4.4420</span><span class="n">us</span>         <span class="mi">1</span>  <span class="mf">4.4420</span><span class="n">us</span>  <span class="mf">4.4420</span><span class="n">us</span>  <span class="mf">4.4420</span><span class="n">us</span>  <span class="n">cudaSetDevice</span>
+  <span class="mf">0.00</span><span class="o">%</span>  <span class="mf">1.2910</span><span class="n">us</span>         <span class="mi">3</span>     <span class="mi">430</span><span class="n">ns</span>     <span class="mi">139</span><span class="n">ns</span>     <span class="mi">914</span><span class="n">ns</span>  <span class="n">cuDeviceGetCount</span>
+  <span class="mf">0.00</span><span class="o">%</span>     <span class="mi">709</span><span class="n">ns</span>         <span class="mi">3</span>     <span class="mi">236</span><span class="n">ns</span>     <span class="mi">119</span><span class="n">ns</span>     <span class="mi">397</span><span class="n">ns</span>  <span class="n">cuDeviceGet</span>
+</pre></div>
+</div>
+<img alt="../_images/mem_transfer2.png" src="../_images/mem_transfer2.png" />
+</div>
+<div class="section" id="zero-copy-memory">
+<h2>zero copy memory<a class="headerlink" href="#zero-copy-memory" title="Permalink to this headline">¶</a></h2>
+<p>zero copy memory使用内存映射来让gpu直接访问cpu,减少主机和设备内存之间的通信时间.</p>
+<p>GPU threads can directly access zero-copy memory. There are several advantages to using zero-copy memory in CUDA kernels, such as:</p>
+<p>➤ Leveraging host memory when there is insufficient device memory</p>
+<p>➤ Avoiding explicit data transfer between the host and device</p>
+<p>➤ Improving PCIe transfer rates</p>
+<p>Zero-copy memory is pinned (non-pageable) memory that is mapped into the device address space.
+You can create a mapped, pinned memory region with the following function:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">cudaError_t</span> <span class="n">cudaHostAlloc</span><span class="p">(</span><span class="n">void</span> <span class="o">**</span><span class="n">pHost</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">count</span><span class="p">,</span> <span class="n">unsigned</span> <span class="nb">int</span> <span class="n">flags</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The flags parameter enables further configuration of special properties of the allocated memory:</p>
+<p>➤ cudaHostAllocDefault</p>
+<p>➤ cudaHostAllocPortable</p>
+<p>➤ cudaHostAllocWriteCombined</p>
+<p>➤ cudaHostAllocMapped</p>
+<p>cudaHostAllocDefault makes the behavior of cudaHostAlloc identical to cudaMallocHost.  Setting cudaHostAllocPortable returns pinned memory that can be used by all CUDA contexts, not just the one that performed the allocation. The flag cudaHostAllocWriteCombined returns write-combined memory, which can be transferred across the PCI Express bus more quickly on some system configurations but cannot be read efficiently by most hosts. Therefore, write-combined memory is a good option for buffers that will be written by the host and read by the device using either mapped pinned memory or host-to-device transfers. The most relevant flag to zero-copy memory is cudaHostAllocMapped, which returns host memory that is mapped into the device address space.</p>
+<p>You can obtain the device pointer for mapped pinned memory using the following function:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">cudaError_t</span> <span class="n">cudaHostGetDevicePointer</span><span class="p">(</span><span class="n">void</span> <span class="o">**</span><span class="n">pDevice</span><span class="p">,</span> <span class="n">void</span> <span class="o">*</span><span class="n">pHost</span><span class="p">,</span> <span class="n">unsigned</span> <span class="nb">int</span> <span class="n">flags</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>This function returns a device pointer in pDevice that can be referenced on the device to access mapped, pinned host memory. This function will fail if the device does not support mapped, pinned memory. flag is reserved for future use. For now, it must be set to zero.</p>
+<p>nvprof ./sumArrayZerocpy</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">==</span><span class="mi">19271</span><span class="o">==</span> <span class="n">NVPROF</span> <span class="ow">is</span> <span class="n">profiling</span> <span class="n">process</span> <span class="mi">19271</span><span class="p">,</span> <span class="n">command</span><span class="p">:</span> <span class="o">./</span><span class="n">sumArrayZerocpy</span>
+<span class="n">Using</span> <span class="n">Device</span> <span class="mi">0</span><span class="p">:</span> <span class="n">GeForce</span> <span class="n">GTX</span> <span class="mi">1080</span> <span class="n">Vector</span> <span class="n">size</span> <span class="mi">1024</span> <span class="n">power</span> <span class="mi">10</span>  <span class="n">nbytes</span>    <span class="mi">4</span> <span class="n">KB</span>
+<span class="o">==</span><span class="mi">19271</span><span class="o">==</span> <span class="n">Profiling</span> <span class="n">application</span><span class="p">:</span> <span class="o">./</span><span class="n">sumArrayZerocpy</span>
+<span class="o">==</span><span class="mi">19271</span><span class="o">==</span> <span class="n">Profiling</span> <span class="n">result</span><span class="p">:</span>
+<span class="n">Time</span><span class="p">(</span><span class="o">%</span><span class="p">)</span>      <span class="n">Time</span>     <span class="n">Calls</span>       <span class="n">Avg</span>       <span class="n">Min</span>       <span class="n">Max</span>  <span class="n">Name</span>
+ <span class="mf">38.87</span><span class="o">%</span>  <span class="mf">3.0730</span><span class="n">us</span>         <span class="mi">1</span>  <span class="mf">3.0730</span><span class="n">us</span>  <span class="mf">3.0730</span><span class="n">us</span>  <span class="mf">3.0730</span><span class="n">us</span>  <span class="n">sumArraysZeroCopy</span><span class="p">(</span><span class="nb">float</span><span class="o">*</span><span class="p">,</span> <span class="nb">float</span><span class="o">*</span><span class="p">,</span> <span class="nb">float</span><span class="o">*</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+ <span class="mf">25.91</span><span class="o">%</span>  <span class="mf">2.0480</span><span class="n">us</span>         <span class="mi">1</span>  <span class="mf">2.0480</span><span class="n">us</span>  <span class="mf">2.0480</span><span class="n">us</span>  <span class="mf">2.0480</span><span class="n">us</span>  <span class="n">sumArrays</span><span class="p">(</span><span class="nb">float</span><span class="o">*</span><span class="p">,</span> <span class="nb">float</span><span class="o">*</span><span class="p">,</span> <span class="nb">float</span><span class="o">*</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+ <span class="mf">21.05</span><span class="o">%</span>  <span class="mf">1.6640</span><span class="n">us</span>         <span class="mi">2</span>     <span class="mi">832</span><span class="n">ns</span>     <span class="mi">832</span><span class="n">ns</span>     <span class="mi">832</span><span class="n">ns</span>  <span class="p">[</span><span class="n">CUDA</span> <span class="n">memcpy</span> <span class="n">HtoD</span><span class="p">]</span>
+ <span class="mf">14.17</span><span class="o">%</span>  <span class="mf">1.1200</span><span class="n">us</span>         <span class="mi">2</span>     <span class="mi">560</span><span class="n">ns</span>     <span class="mi">480</span><span class="n">ns</span>     <span class="mi">640</span><span class="n">ns</span>  <span class="p">[</span><span class="n">CUDA</span> <span class="n">memcpy</span> <span class="n">DtoH</span><span class="p">]</span>
+</pre></div>
+</div>
+<img alt="../_images/zero_copy.png" src="../_images/zero_copy.png" />
+</div>
+<div class="section" id="memory-access-patterns">
+<h2>Memory access patterns<a class="headerlink" href="#memory-access-patterns" title="Permalink to this headline">¶</a></h2>
+<p>To achieve the best performance when reading and writing data, memory access operations must meet certain conditions. One of the distinguishing features of the CUDA execution model is that instructions are issued and executed per warp. Memory operations are also issued per warp. When executing a memory instruction, each thread in a warp provides a memory address it is loading or storing. Cooperatively, the 32 threads in a warp present a single memory access request comprised of the requested addresses, which is serviced by one or more device memory transactions.  Depending on the distribution of memory addresses within a warp, memory accesses can be classified into different patterns. In this section, you are going to examine different memory access patterns and learn how to achieve optimal global memory access.</p>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, lijun.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

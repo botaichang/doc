@@ -1,0 +1,421 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>10. Tracking 跟踪 &mdash; vision 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="vision 1.0 documentation" href="../index.html"/>
+        <link rel="next" title="11.PnPsolver" href="11_PnPsolver.html"/>
+        <link rel="prev" title="9.FrameDrawer" href="9_framedrawer.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> vision
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="1initializer.html">1.初始化Initializer.h</a></li>
+<li class="toctree-l1"><a class="reference internal" href="2_frame.html">2.Frame帧类</a></li>
+<li class="toctree-l1"><a class="reference internal" href="3_keyframe.html">3.keyframe 关键帧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="4_keyframedatabase.html">4.KeyframeDatabase</a></li>
+<li class="toctree-l1"><a class="reference internal" href="5_mappoint.html">5.MapPoint 路标点,地图点</a></li>
+<li class="toctree-l1"><a class="reference internal" href="6_map.html">6.Map地图</a></li>
+<li class="toctree-l1"><a class="reference internal" href="7_orbextractor.html">7.ORBExtractor  ORB特征提取</a></li>
+<li class="toctree-l1"><a class="reference internal" href="8_orbmatcher.html">8.ORBmatcher ORB 特征匹配</a></li>
+<li class="toctree-l1"><a class="reference internal" href="9_framedrawer.html">9.FrameDrawer</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">10. Tracking 跟踪</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">其他函数</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="11_PnPsolver.html">11.PnPsolver</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">vision</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>10. Tracking 跟踪</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/source/10_tracking.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="tracking">
+<h1>10. Tracking 跟踪<a class="headerlink" href="#tracking" title="Permalink to this headline">¶</a></h1>
+<p>获取图像并进行跟踪</p>
+<p>GramImage</p>
+<dl class="docutils">
+<dt>::</dt>
+<dd><p class="first">cv::Mat GrabImageStereo(const cv::Mat &amp;imRectLeft,const cv::Mat &amp;imRectRight, const double &amp;timestamp);
+cv::Mat GrabImageRGBD(const cv::Mat &amp;imRGB,const cv::Mat &amp;imD, const double &amp;timestamp);
+cv::Mat GrabImageMonocular(const cv::Mat &amp;im, const double &amp;timestamp);</p>
+<p class="last">void SetLocalMapper(LocalMapping* pLocalMapper);
+void SetLoopClosing(LoopClosing* pLoopClosing);
+void SetViewer(Viewer* pViewer);</p>
+</dd>
+</dl>
+<p>更改补偿信息</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">void</span> <span class="n">ChangeCalibration</span><span class="p">(</span><span class="n">const</span> <span class="n">string</span> <span class="o">&amp;</span><span class="n">strSettingPath</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>跟踪状态</p>
+<ul class="simple">
+<li>系统未准备</li>
+<li>还没有图像</li>
+<li>没有初始化</li>
+<li>跟踪OK</li>
+<li>跟踪丢失</li>
+</ul>
+<dl class="docutils">
+<dt>::</dt>
+<dd><p class="first">// Tracking states
+enum eTrackingState{</p>
+<blockquote>
+<div>SYSTEM_NOT_READY=-1,
+NO_IMAGES_YET=0,
+NOT_INITIALIZED=1,
+OK=2,
+LOST=3</div></blockquote>
+<p>};</p>
+<p class="last">eTrackingState mState;
+eTrackingState mLastProcessedState;</p>
+</dd>
+</dl>
+<p>输入传感器,当前帧</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">Input</span> <span class="n">sensor</span><span class="p">:</span><span class="n">MONOCULAR</span><span class="p">,</span> <span class="n">STEREO</span><span class="p">,</span> <span class="n">RGBD</span>
+<span class="nb">int</span> <span class="n">mSensor</span><span class="p">;</span>
+
+<span class="o">//</span> <span class="n">Current</span> <span class="n">Frame</span>
+<span class="n">Frame</span> <span class="n">mCurrentFrame</span><span class="p">;</span>
+<span class="n">cv</span><span class="p">::</span><span class="n">Mat</span> <span class="n">mImGray</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>Initialization Variables (Monocular)
+初始化时前两帧相关变量</p>
+<dl class="docutils">
+<dt>::</dt>
+<dd>std::vector&lt;int&gt; mvIniLastMatches;
+std::vector&lt;int&gt; mvIniMatches;// 跟踪初始化时前两帧之间的匹配
+std::vector&lt;cv::Point2f&gt; mvbPrevMatched;
+std::vector&lt;cv::Point3f&gt; mvIniP3D;
+Frame mInitialFrame;</dd>
+</dl>
+<p>Lists used to recover the full camera trajectory at the end of the execution.
+Basically we store the reference keyframe for each frame and its relative transformation</p>
+<dl class="docutils">
+<dt>::</dt>
+<dd>list&lt;cv::Mat&gt; mlRelativeFramePoses;
+list&lt;KeyFrame*&gt; mlpReferences;
+list&lt;double&gt; mlFrameTimes;
+list&lt;bool&gt; mlbLost;</dd>
+</dl>
+<div class="section" id="id1">
+<h2>其他函数<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default"><div class="highlight"><pre><span></span>// Main tracking function. It is independent of the input sensor.
+void Track();
+
+// Map initialization for stereo and RGB-D
+void StereoInitialization();
+
+// Map initialization for monocular
+void MonocularInitialization();
+void CreateInitialMapMonocular();
+
+void CheckReplacedInLastFrame();
+bool TrackReferenceKeyFrame();
+void UpdateLastFrame();
+bool TrackWithMotionModel();
+
+bool Relocalization();
+
+void UpdateLocalMap();
+void UpdateLocalPoints();
+void UpdateLocalKeyFrames();
+
+bool TrackLocalMap();
+void SearchLocalPoints();
+
+bool NeedNewKeyFrame();
+void CreateNewKeyFrame();
+
+// In case of performing only localization, this flag is true when there are no matches to
+// points in the map. Still tracking will continue if there are enough matches with temporal points.
+// In that case we are doing visual odometry. The system will try to do relocalization to recover
+// &quot;zero-drift&quot; localization to the map.
+bool mbVO;
+
+//Other Thread Pointers
+LocalMapping* mpLocalMapper;
+LoopClosing* mpLoopClosing;
+
+//ORB
+// orb特征提取器，不管单目还是双目，mpORBextractorLeft都要用到
+// 如果是双目，则要用到mpORBextractorRight
+// 如果是单目，在初始化的时候使用mpIniORBextractor而不是mpORBextractorLeft，
+// mpIniORBextractor属性中提取的特征点个数是mpORBextractorLeft的两倍
+ORBextractor* mpORBextractorLeft, *mpORBextractorRight;
+ORBextractor* mpIniORBextractor;
+
+//BoW
+ORBVocabulary* mpORBVocabulary;
+KeyFrameDatabase* mpKeyFrameDB;
+
+// Initalization (only for monocular)
+// 单目初始器
+Initializer* mpInitializer;
+
+//Local Map
+KeyFrame* mpReferenceKF;// 当前关键帧就是参考帧
+std::vector&lt;KeyFrame*&gt; mvpLocalKeyFrames;
+std::vector&lt;MapPoint*&gt; mvpLocalMapPoints;
+
+// System
+System* mpSystem;
+
+//Drawers
+Viewer* mpViewer;
+FrameDrawer* mpFrameDrawer;
+MapDrawer* mpMapDrawer;
+
+//Map
+Map* mpMap;
+
+//Calibration matrix
+cv::Mat mK;
+cv::Mat mDistCoef;
+float mbf;
+
+//New KeyFrame rules (according to fps)
+int mMinFrames;
+int mMaxFrames;
+
+// Threshold close/far points
+// Points seen as close by the stereo/RGBD sensor are considered reliable
+// and inserted from just one frame. Far points requiere a match in two keyframes.
+float mThDepth;
+
+// For RGB-D inputs only. For some datasets (e.g. TUM) the depthmap values are scaled.
+float mDepthMapFactor;
+
+//Current matches in frame
+int mnMatchesInliers;
+
+//Last Frame, KeyFrame and Relocalisation Info
+KeyFrame* mpLastKeyFrame;
+Frame mLastFrame;
+unsigned int mnLastKeyFrameId;
+unsigned int mnLastRelocFrameId;
+
+//Motion Model
+cv::Mat mVelocity;
+
+//Color order (true RGB, false BGR, ignored if grayscale)
+bool mbRGB;
+
+list&lt;MapPoint*&gt; mlpTemporalPoints;
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="11_PnPsolver.html" class="btn btn-neutral float-right" title="11.PnPsolver" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="9_framedrawer.html" class="btn btn-neutral" title="9.FrameDrawer" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, lijun.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

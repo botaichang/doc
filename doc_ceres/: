@@ -1,0 +1,11 @@
+4checkThreadIdx
+===============================
+通过这个程序掌握基本的cuda编程模型
+
+-1. 分配cpu内存
+-2. 分配gpu内存
+-3. copy 数据从host到device
+-4. host端launch cuda kernel 对数据进行计算
+-5. 将结果从device端copy到host端(可省略,数据验证时会用,我是这么理解的)
+-6. 释放gpu内存
+-7. 释放cpu内存

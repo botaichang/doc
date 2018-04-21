@@ -1,0 +1,380 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>3 curve fitting &mdash; cuda 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="cuda 1.0 documentation" href="../index.html"/>
+        <link rel="next" title="4_CheckThreadIdx" href="4checkThreadIdx.html"/>
+        <link rel="prev" title="2 含有多个子函数的极小值" href="2gridBlock.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> cuda
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="1helloworld.html">1 namespace for ceres libs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="2gridBlock.html">2 含有多个子函数的极小值</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">3 curve fitting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="4checkThreadIdx.html">4_CheckThreadIdx</a></li>
+<li class="toctree-l1"><a class="reference internal" href="5checkYourCudaResults.html">5_CheckYourCudaResults</a></li>
+<li class="toctree-l1"><a class="reference internal" href="6timeingYourKernel.html">6_TimingYourKernel测试你的kernel性能</a></li>
+<li class="toctree-l1"><a class="reference internal" href="7ExecutModel_intro.html">7_理解基本的CUDA执行模型-CUDA Execution Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="8Warp.html">8_Understanding_the_nature_of_WARP</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">cuda</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>3 curve fitting</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/source/3checkDimension.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="curve-fitting">
+<h1>3 curve fitting<a class="headerlink" href="#curve-fitting" title="Permalink to this headline">¶</a></h1>
+<p>目的 curve fitting y = e ** (mx+c)</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">Data</span> <span class="n">generated</span> <span class="n">using</span> <span class="n">the</span> <span class="n">following</span> <span class="n">octave</span> <span class="n">code</span><span class="o">.</span>
+<span class="o">//</span>   <span class="n">randn</span><span class="p">(</span><span class="s1">&#39;seed&#39;</span><span class="p">,</span> <span class="mi">23497</span><span class="p">);</span>
+<span class="o">//</span>   <span class="n">m</span> <span class="o">=</span> <span class="mf">0.3</span><span class="p">;</span>
+<span class="o">//</span>   <span class="n">c</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">;</span>
+<span class="o">//</span>   <span class="n">x</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mf">0.075</span><span class="p">:</span><span class="mi">5</span><span class="p">];</span>
+<span class="o">//</span>   <span class="n">y</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="n">m</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="n">c</span><span class="p">);</span>
+<span class="o">//</span>   <span class="n">noise</span> <span class="o">=</span> <span class="n">randn</span><span class="p">(</span><span class="n">size</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="o">*</span> <span class="mf">0.2</span><span class="p">;</span>
+<span class="o">//</span>   <span class="n">y_observed</span> <span class="o">=</span> <span class="n">y</span> <span class="o">+</span> <span class="n">noise</span><span class="p">;</span>
+<span class="o">//</span>   <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="s1">&#39;, y_observed&#39;</span><span class="p">];</span>
+</pre></div>
+</div>
+<p>flow</p>
+<ul class="simple">
+<li>1.初始值</li>
+</ul>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">const</span> <span class="nb">int</span> <span class="n">kNumObservations</span> <span class="o">=</span> <span class="mi">67</span><span class="p">;</span>
+<span class="n">const</span> <span class="n">double</span> <span class="n">data</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="mf">0.000000e+00</span><span class="p">,</span> <span class="mf">1.133898e+00</span><span class="p">,</span>
+  <span class="mf">7.500000e-02</span><span class="p">,</span> <span class="mf">1.334902e+00</span><span class="p">,</span>
+  <span class="mf">1.500000e-01</span><span class="p">,</span> <span class="mf">1.213546e+00</span><span class="p">,</span>
+  <span class="mf">2.250000e-01</span><span class="p">,</span> <span class="mf">1.252016e+00</span><span class="p">,</span>
+  <span class="mf">3.000000e-01</span><span class="p">,</span> <span class="mf">1.392265e+00</span><span class="p">,</span>
+  <span class="mf">3.750000e-01</span><span class="p">,</span> <span class="mf">1.314458e+00</span><span class="p">,</span>
+  <span class="mf">4.500000e-01</span><span class="p">,</span> <span class="mf">1.472541e+00</span><span class="p">,</span>
+  <span class="mf">5.250000e-01</span><span class="p">,</span> <span class="mf">1.536218e+00</span><span class="p">,</span>
+  <span class="mf">6.000000e-01</span><span class="p">,</span> <span class="mf">1.355679e+00</span><span class="p">,</span>
+  <span class="mf">6.750000e-01</span><span class="p">,</span> <span class="mf">1.463566e+00</span><span class="p">,</span>
+  <span class="mf">7.500000e-01</span><span class="p">,</span> <span class="mf">1.490201e+00</span><span class="p">,</span>
+  <span class="mf">8.250000e-01</span><span class="p">,</span> <span class="mf">1.658699e+00</span><span class="p">,</span>
+  <span class="mf">9.000000e-01</span><span class="p">,</span> <span class="mf">1.067574e+00</span><span class="p">,</span>
+  <span class="mf">9.750000e-01</span><span class="p">,</span> <span class="mf">1.464629e+00</span><span class="p">,</span>
+  <span class="mf">1.050000e+00</span><span class="p">,</span> <span class="mf">1.402653e+00</span><span class="p">,</span>
+  <span class="mf">1.125000e+00</span><span class="p">,</span> <span class="mf">1.713141e+00</span><span class="p">,</span>
+  <span class="mf">1.200000e+00</span><span class="p">,</span> <span class="mf">1.527021e+00</span><span class="p">,</span>
+  <span class="mf">1.275000e+00</span><span class="p">,</span> <span class="mf">1.702632e+00</span><span class="p">,</span>
+  <span class="mf">1.350000e+00</span><span class="p">,</span> <span class="mf">1.423899e+00</span><span class="p">,</span>
+  <span class="mf">1.425000e+00</span><span class="p">,</span> <span class="mf">1.543078e+00</span><span class="p">,</span>
+  <span class="mf">1.500000e+00</span><span class="p">,</span> <span class="mf">1.664015e+00</span><span class="p">,</span>
+  <span class="mf">1.575000e+00</span><span class="p">,</span> <span class="mf">1.732484e+00</span><span class="p">,</span>
+  <span class="mf">1.650000e+00</span><span class="p">,</span> <span class="mf">1.543296e+00</span><span class="p">,</span>
+  <span class="mf">1.725000e+00</span><span class="p">,</span> <span class="mf">1.959523e+00</span><span class="p">,</span>
+  <span class="mf">1.800000e+00</span><span class="p">,</span> <span class="mf">1.685132e+00</span><span class="p">,</span>
+  <span class="mf">1.875000e+00</span><span class="p">,</span> <span class="mf">1.951791e+00</span><span class="p">,</span>
+  <span class="mf">1.950000e+00</span><span class="p">,</span> <span class="mf">2.095346e+00</span><span class="p">,</span>
+  <span class="mf">2.025000e+00</span><span class="p">,</span> <span class="mf">2.361460e+00</span><span class="p">,</span>
+  <span class="mf">2.100000e+00</span><span class="p">,</span> <span class="mf">2.169119e+00</span><span class="p">,</span>
+  <span class="mf">2.175000e+00</span><span class="p">,</span> <span class="mf">2.061745e+00</span><span class="p">,</span>
+  <span class="mf">2.250000e+00</span><span class="p">,</span> <span class="mf">2.178641e+00</span><span class="p">,</span>
+  <span class="mf">2.325000e+00</span><span class="p">,</span> <span class="mf">2.104346e+00</span><span class="p">,</span>
+  <span class="mf">2.400000e+00</span><span class="p">,</span> <span class="mf">2.584470e+00</span><span class="p">,</span>
+  <span class="mf">2.475000e+00</span><span class="p">,</span> <span class="mf">1.914158e+00</span><span class="p">,</span>
+  <span class="mf">2.550000e+00</span><span class="p">,</span> <span class="mf">2.368375e+00</span><span class="p">,</span>
+  <span class="mf">2.625000e+00</span><span class="p">,</span> <span class="mf">2.686125e+00</span><span class="p">,</span>
+  <span class="mf">2.700000e+00</span><span class="p">,</span> <span class="mf">2.712395e+00</span><span class="p">,</span>
+  <span class="mf">2.775000e+00</span><span class="p">,</span> <span class="mf">2.499511e+00</span><span class="p">,</span>
+  <span class="mf">2.850000e+00</span><span class="p">,</span> <span class="mf">2.558897e+00</span><span class="p">,</span>
+  <span class="mf">2.925000e+00</span><span class="p">,</span> <span class="mf">2.309154e+00</span><span class="p">,</span>
+  <span class="mf">3.000000e+00</span><span class="p">,</span> <span class="mf">2.869503e+00</span><span class="p">,</span>
+  <span class="mf">3.075000e+00</span><span class="p">,</span> <span class="mf">3.116645e+00</span><span class="p">,</span>
+  <span class="mf">3.150000e+00</span><span class="p">,</span> <span class="mf">3.094907e+00</span><span class="p">,</span>
+  <span class="mf">3.225000e+00</span><span class="p">,</span> <span class="mf">2.471759e+00</span><span class="p">,</span>
+  <span class="mf">3.300000e+00</span><span class="p">,</span> <span class="mf">3.017131e+00</span><span class="p">,</span>
+  <span class="mf">3.375000e+00</span><span class="p">,</span> <span class="mf">3.232381e+00</span><span class="p">,</span>
+  <span class="mf">3.450000e+00</span><span class="p">,</span> <span class="mf">2.944596e+00</span><span class="p">,</span>
+  <span class="mf">3.525000e+00</span><span class="p">,</span> <span class="mf">3.385343e+00</span><span class="p">,</span>
+  <span class="mf">3.600000e+00</span><span class="p">,</span> <span class="mf">3.199826e+00</span><span class="p">,</span>
+  <span class="mf">3.675000e+00</span><span class="p">,</span> <span class="mf">3.423039e+00</span><span class="p">,</span>
+  <span class="mf">3.750000e+00</span><span class="p">,</span> <span class="mf">3.621552e+00</span><span class="p">,</span>
+  <span class="mf">3.825000e+00</span><span class="p">,</span> <span class="mf">3.559255e+00</span><span class="p">,</span>
+  <span class="mf">3.900000e+00</span><span class="p">,</span> <span class="mf">3.530713e+00</span><span class="p">,</span>
+  <span class="mf">3.975000e+00</span><span class="p">,</span> <span class="mf">3.561766e+00</span><span class="p">,</span>
+  <span class="mf">4.050000e+00</span><span class="p">,</span> <span class="mf">3.544574e+00</span><span class="p">,</span>
+  <span class="mf">4.125000e+00</span><span class="p">,</span> <span class="mf">3.867945e+00</span><span class="p">,</span>
+  <span class="mf">4.200000e+00</span><span class="p">,</span> <span class="mf">4.049776e+00</span><span class="p">,</span>
+  <span class="mf">4.275000e+00</span><span class="p">,</span> <span class="mf">3.885601e+00</span><span class="p">,</span>
+  <span class="mf">4.350000e+00</span><span class="p">,</span> <span class="mf">4.110505e+00</span><span class="p">,</span>
+  <span class="mf">4.425000e+00</span><span class="p">,</span> <span class="mf">4.345320e+00</span><span class="p">,</span>
+  <span class="mf">4.500000e+00</span><span class="p">,</span> <span class="mf">4.161241e+00</span><span class="p">,</span>
+  <span class="mf">4.575000e+00</span><span class="p">,</span> <span class="mf">4.363407e+00</span><span class="p">,</span>
+  <span class="mf">4.650000e+00</span><span class="p">,</span> <span class="mf">4.161576e+00</span><span class="p">,</span>
+  <span class="mf">4.725000e+00</span><span class="p">,</span> <span class="mf">4.619728e+00</span><span class="p">,</span>
+  <span class="mf">4.800000e+00</span><span class="p">,</span> <span class="mf">4.737410e+00</span><span class="p">,</span>
+  <span class="mf">4.875000e+00</span><span class="p">,</span> <span class="mf">4.727863e+00</span><span class="p">,</span>
+  <span class="mf">4.950000e+00</span><span class="p">,</span> <span class="mf">4.669206e+00</span><span class="p">,</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li>2.构造损失函数</li>
+</ul>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">struct</span> <span class="n">ExponentialResidual</span> <span class="p">{</span>
+  <span class="n">ExponentialResidual</span><span class="p">(</span><span class="n">double</span> <span class="n">x</span><span class="p">,</span> <span class="n">double</span> <span class="n">y</span><span class="p">)</span>
+      <span class="p">:</span> <span class="n">x_</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">y_</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="p">{}</span>
+
+  <span class="n">template</span> <span class="o">&lt;</span><span class="n">typename</span> <span class="n">T</span><span class="o">&gt;</span> <span class="nb">bool</span> <span class="n">operator</span><span class="p">()(</span><span class="n">const</span> <span class="n">T</span><span class="o">*</span> <span class="n">const</span> <span class="n">m</span><span class="p">,</span>
+                                        <span class="n">const</span> <span class="n">T</span><span class="o">*</span> <span class="n">const</span> <span class="n">c</span><span class="p">,</span>
+                                        <span class="n">T</span><span class="o">*</span> <span class="n">residual</span><span class="p">)</span> <span class="n">const</span> <span class="p">{</span>
+    <span class="n">residual</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">T</span><span class="p">(</span><span class="n">y_</span><span class="p">)</span> <span class="o">-</span> <span class="n">exp</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">T</span><span class="p">(</span><span class="n">x_</span><span class="p">)</span> <span class="o">+</span> <span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+    <span class="k">return</span> <span class="n">true</span><span class="p">;</span>
+  <span class="p">}</span>
+
+ <span class="n">private</span><span class="p">:</span>
+  <span class="n">const</span> <span class="n">double</span> <span class="n">x_</span><span class="p">;</span>
+  <span class="n">const</span> <span class="n">double</span> <span class="n">y_</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li>3.创建问题</li>
+</ul>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Problem</span> <span class="n">problem</span><span class="p">;</span>
+<span class="k">for</span> <span class="p">(</span><span class="nb">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">kNumObservations</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">problem</span><span class="o">.</span><span class="n">AddResidualBlock</span><span class="p">(</span>
+      <span class="n">new</span> <span class="n">AutoDiffCostFunction</span><span class="o">&lt;</span><span class="n">ExponentialResidual</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span>
+          <span class="n">new</span> <span class="n">ExponentialResidual</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])),</span>
+      <span class="n">NULL</span><span class="p">,</span>
+      <span class="o">&amp;</span><span class="n">m</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">c</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><ol class="first arabic" start="4">
+<li>问题求解</li>
+</ol>
+</li>
+</ul>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Solver</span><span class="p">::</span><span class="n">Options</span> <span class="n">options</span><span class="p">;</span>
+<span class="n">options</span><span class="o">.</span><span class="n">max_num_iterations</span> <span class="o">=</span> <span class="mi">25</span><span class="p">;</span>
+<span class="n">options</span><span class="o">.</span><span class="n">linear_solver_type</span> <span class="o">=</span> <span class="n">ceres</span><span class="p">::</span><span class="n">DENSE_QR</span><span class="p">;</span>
+<span class="n">options</span><span class="o">.</span><span class="n">minimizer_progress_to_stdout</span> <span class="o">=</span> <span class="n">true</span><span class="p">;</span>
+
+<span class="n">Solver</span><span class="p">::</span><span class="n">Summary</span> <span class="n">summary</span><span class="p">;</span>
+<span class="n">Solve</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">problem</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">summary</span><span class="p">);</span>
+<span class="n">std</span><span class="p">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">summary</span><span class="o">.</span><span class="n">BriefReport</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">;</span>
+<span class="n">std</span><span class="p">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;Initial m: &quot;</span> <span class="o">&lt;&lt;</span> <span class="mf">0.0</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot; c: &quot;</span> <span class="o">&lt;&lt;</span> <span class="mf">0.0</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">;</span>
+<span class="n">std</span><span class="p">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;Final   m: &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">m</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot; c: &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">;</span>
+</pre></div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="4checkThreadIdx.html" class="btn btn-neutral float-right" title="4_CheckThreadIdx" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="2gridBlock.html" class="btn btn-neutral" title="2 含有多个子函数的极小值" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, lijun.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

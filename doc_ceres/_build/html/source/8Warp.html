@@ -1,0 +1,295 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>8_Understanding_the_nature_of_WARP &mdash; cuda 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="cuda 1.0 documentation" href="../index.html"/>
+        <link rel="prev" title="7_理解基本的CUDA执行模型-CUDA Execution Model" href="7ExecutModel_intro.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> cuda
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="1helloworld.html">1_Helloword</a></li>
+<li class="toctree-l1"><a class="reference internal" href="2gridBlock.html">2_GridBlock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="3checkDimension.html">3_CheckDimension从Host,Device端访问维度</a></li>
+<li class="toctree-l1"><a class="reference internal" href="4checkThreadIdx.html">4_CheckThreadIdx</a></li>
+<li class="toctree-l1"><a class="reference internal" href="5checkYourCudaResults.html">5_CheckYourCudaResults</a></li>
+<li class="toctree-l1"><a class="reference internal" href="6timeingYourKernel.html">6_TimingYourKernel测试你的kernel性能</a></li>
+<li class="toctree-l1"><a class="reference internal" href="7ExecutModel_intro.html">7_理解基本的CUDA执行模型-CUDA Execution Model</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">8_Understanding_the_nature_of_WARP</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#warp">warp数计算</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#warp-divergence">warp Divergence</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">如何避免warp divergence</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">资源分配</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#grid-block-size">分配grid,block size 指南</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">cuda</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>8_Understanding_the_nature_of_WARP</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/source/8Warp.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="understanding-the-nature-of-warp">
+<h1>8_Understanding_the_nature_of_WARP<a class="headerlink" href="#understanding-the-nature-of-warp" title="Permalink to this headline">¶</a></h1>
+<p>Launching kernel时,从软件角度看,所有的线程是并行的.</p>
+<p>但从硬件角度来讲,并不是所有的线程同时执行.</p>
+<p>cuda中,将32个线程分到一个单元,该单元称为warp.</p>
+<img alt="../_images/warp_hardwareview.png" src="../_images/warp_hardwareview.png" />
+<div class="section" id="warp">
+<h2>warp数计算<a class="headerlink" href="#warp" title="Permalink to this headline">¶</a></h2>
+<p>分配的warp数 = 1个Block的threads总数 / warpSize , 然后向上取整,</p>
+<p>即 分配的warp数 = ceil(1个Block的threads总数 / warpSize)</p>
+<p>如果现在有80个线程,则会分配3个warp,即96个线程来支持80个线程,尽管这些线程没有用,但是仍然会消耗SM资源,比如说寄存器.</p>
+</div>
+<div class="section" id="warp-divergence">
+<h2>warp Divergence<a class="headerlink" href="#warp-divergence" title="Permalink to this headline">¶</a></h2>
+<p>一个warp中的32个threads需要执行相同的指令,但是如果32个线程中遇到控制流语句时,如果进入不同的分支,那么同一时刻除了正在执行的分支外,其余分支被阻塞了,会影响性能.这类问题就是warp divergence.
+比如在一个warp中程序如下:</p>
+<p>if(cond)
+{}
+else
+{}</p>
+<p>如果有16个thread的cond为True,则这16个线程执行,同时其余16个线程被暂停.等这16个线程执行完之后,再执行其余16个线程.因此就会导致性能减半.</p>
+<p>为了获得最好的性能,需要避免同一个warp存在不同的执行路径.</p>
+</div>
+<div class="section" id="id1">
+<h2>如何避免warp divergence<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>将条件改为以warp大小为步调,然后取奇偶数,</p>
+<p>if((cond/warpSize) % 2)
+{}
+else
+{}</p>
+<p>用nvprof来分析branch的效率,可以用来检查是否有可以提高的必要性.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">nvprof</span> <span class="o">--</span><span class="n">metrics</span> <span class="n">branch_efficiency</span> <span class="o">./</span><span class="n">simpleDivergence</span>
+</pre></div>
+</div>
+<p>nvcc -g -G 编译时不做branch 的优化
+nvcc -O3 编译时会做branch的优化</p>
+</div>
+<div class="section" id="id2">
+<h2>资源分配<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>计算资源限制了有效的warp数,因此,必须要注意硬件的限制,为最大化gpu的利用率,你需要最大化有效warps的数量.</p>
+<p>compute resource partitioning requires special attention in CUDA programming: The compute resources limit the number of active warps. Therefore, you must be aware of the restrictions imposed by the hardware, and the resources used by your kernel. In order to maximize GPU utilization, you need to maximize the number of active warps.</p>
+<p>一个thread block被成为active block当计算资源如寄存器,共享内存分配给该block.它所包含的warp就被成为active warps.active warps进一步会被分为三类:</p>
+<ul class="simple">
+<li>selected warp</li>
+<li>stalled warp</li>
+<li>eligible warp</li>
+</ul>
+</div>
+<div class="section" id="grid-block-size">
+<h2>分配grid,block size 指南<a class="headerlink" href="#grid-block-size" title="Permalink to this headline">¶</a></h2>
+<img alt="../_images/guidelines_for_grid_block.png" src="../_images/guidelines_for_grid_block.png" />
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="7ExecutModel_intro.html" class="btn btn-neutral" title="7_理解基本的CUDA执行模型-CUDA Execution Model" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, lijun.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
