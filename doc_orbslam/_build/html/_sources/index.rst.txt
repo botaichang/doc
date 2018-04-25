@@ -22,6 +22,9 @@ Contents:
    source/9_framedrawer.rst
    source/10_tracking.rst
    source/11_PnPsolver.rst
+   source/12_slambook_2d2d.rst
+   source/13_slambook_3d2d.rst
+   source/14_slambook_3d3d.rst
 
 
 

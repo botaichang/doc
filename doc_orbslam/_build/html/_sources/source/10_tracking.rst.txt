@@ -5,8 +5,8 @@
 
 GramImage
 
-
 ::
+
     cv::Mat GrabImageStereo(const cv::Mat &imRectLeft,const cv::Mat &imRectRight, const double &timestamp);
     cv::Mat GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp);
     cv::Mat GrabImageMonocular(const cv::Mat &im, const double &timestamp);
@@ -31,6 +31,7 @@ GramImage
 - 跟踪丢失
 
 ::
+
     // Tracking states
     enum eTrackingState{
         SYSTEM_NOT_READY=-1,
@@ -59,6 +60,7 @@ Initialization Variables (Monocular)
 初始化时前两帧相关变量
 
 ::
+
     std::vector<int> mvIniLastMatches;
     std::vector<int> mvIniMatches;// 跟踪初始化时前两帧之间的匹配
     std::vector<cv::Point2f> mvbPrevMatched;
@@ -69,6 +71,7 @@ Lists used to recover the full camera trajectory at the end of the execution.
 Basically we store the reference keyframe for each frame and its relative transformation
 
 ::
+
     list<cv::Mat> mlRelativeFramePoses;
     list<KeyFrame*> mlpReferences;
     list<double> mlFrameTimes;

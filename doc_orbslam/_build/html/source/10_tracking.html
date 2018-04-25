@@ -172,16 +172,15 @@
 <h1>10. Tracking 跟踪<a class="headerlink" href="#tracking" title="Permalink to this headline">¶</a></h1>
 <p>获取图像并进行跟踪</p>
 <p>GramImage</p>
-<dl class="docutils">
-<dt>::</dt>
-<dd><p class="first">cv::Mat GrabImageStereo(const cv::Mat &amp;imRectLeft,const cv::Mat &amp;imRectRight, const double &amp;timestamp);
-cv::Mat GrabImageRGBD(const cv::Mat &amp;imRGB,const cv::Mat &amp;imD, const double &amp;timestamp);
-cv::Mat GrabImageMonocular(const cv::Mat &amp;im, const double &amp;timestamp);</p>
-<p class="last">void SetLocalMapper(LocalMapping* pLocalMapper);
-void SetLoopClosing(LoopClosing* pLoopClosing);
-void SetViewer(Viewer* pViewer);</p>
-</dd>
-</dl>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">cv</span><span class="p">::</span><span class="n">Mat</span> <span class="n">GrabImageStereo</span><span class="p">(</span><span class="n">const</span> <span class="n">cv</span><span class="p">::</span><span class="n">Mat</span> <span class="o">&amp;</span><span class="n">imRectLeft</span><span class="p">,</span><span class="n">const</span> <span class="n">cv</span><span class="p">::</span><span class="n">Mat</span> <span class="o">&amp;</span><span class="n">imRectRight</span><span class="p">,</span> <span class="n">const</span> <span class="n">double</span> <span class="o">&amp;</span><span class="n">timestamp</span><span class="p">);</span>
+<span class="n">cv</span><span class="p">::</span><span class="n">Mat</span> <span class="n">GrabImageRGBD</span><span class="p">(</span><span class="n">const</span> <span class="n">cv</span><span class="p">::</span><span class="n">Mat</span> <span class="o">&amp;</span><span class="n">imRGB</span><span class="p">,</span><span class="n">const</span> <span class="n">cv</span><span class="p">::</span><span class="n">Mat</span> <span class="o">&amp;</span><span class="n">imD</span><span class="p">,</span> <span class="n">const</span> <span class="n">double</span> <span class="o">&amp;</span><span class="n">timestamp</span><span class="p">);</span>
+<span class="n">cv</span><span class="p">::</span><span class="n">Mat</span> <span class="n">GrabImageMonocular</span><span class="p">(</span><span class="n">const</span> <span class="n">cv</span><span class="p">::</span><span class="n">Mat</span> <span class="o">&amp;</span><span class="n">im</span><span class="p">,</span> <span class="n">const</span> <span class="n">double</span> <span class="o">&amp;</span><span class="n">timestamp</span><span class="p">);</span>
+
+<span class="n">void</span> <span class="n">SetLocalMapper</span><span class="p">(</span><span class="n">LocalMapping</span><span class="o">*</span> <span class="n">pLocalMapper</span><span class="p">);</span>
+<span class="n">void</span> <span class="n">SetLoopClosing</span><span class="p">(</span><span class="n">LoopClosing</span><span class="o">*</span> <span class="n">pLoopClosing</span><span class="p">);</span>
+<span class="n">void</span> <span class="n">SetViewer</span><span class="p">(</span><span class="n">Viewer</span><span class="o">*</span> <span class="n">pViewer</span><span class="p">);</span>
+</pre></div>
+</div>
 <p>更改补偿信息</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">void</span> <span class="n">ChangeCalibration</span><span class="p">(</span><span class="n">const</span> <span class="n">string</span> <span class="o">&amp;</span><span class="n">strSettingPath</span><span class="p">);</span>
 </pre></div>
@@ -194,21 +193,19 @@ void SetViewer(Viewer* pViewer);</p>
 <li>跟踪OK</li>
 <li>跟踪丢失</li>
 </ul>
-<dl class="docutils">
-<dt>::</dt>
-<dd><p class="first">// Tracking states
-enum eTrackingState{</p>
-<blockquote>
-<div>SYSTEM_NOT_READY=-1,
-NO_IMAGES_YET=0,
-NOT_INITIALIZED=1,
-OK=2,
-LOST=3</div></blockquote>
-<p>};</p>
-<p class="last">eTrackingState mState;
-eTrackingState mLastProcessedState;</p>
-</dd>
-</dl>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">Tracking</span> <span class="n">states</span>
+<span class="n">enum</span> <span class="n">eTrackingState</span><span class="p">{</span>
+    <span class="n">SYSTEM_NOT_READY</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">NO_IMAGES_YET</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">NOT_INITIALIZED</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">OK</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">LOST</span><span class="o">=</span><span class="mi">3</span>
+<span class="p">};</span>
+
+<span class="n">eTrackingState</span> <span class="n">mState</span><span class="p">;</span>
+<span class="n">eTrackingState</span> <span class="n">mLastProcessedState</span><span class="p">;</span>
+</pre></div>
+</div>
 <p>输入传感器,当前帧</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">Input</span> <span class="n">sensor</span><span class="p">:</span><span class="n">MONOCULAR</span><span class="p">,</span> <span class="n">STEREO</span><span class="p">,</span> <span class="n">RGBD</span>
 <span class="nb">int</span> <span class="n">mSensor</span><span class="p">;</span>
@@ -220,23 +217,21 @@ eTrackingState mLastProcessedState;</p>
 </div>
 <p>Initialization Variables (Monocular)
 初始化时前两帧相关变量</p>
-<dl class="docutils">
-<dt>::</dt>
-<dd>std::vector&lt;int&gt; mvIniLastMatches;
-std::vector&lt;int&gt; mvIniMatches;// 跟踪初始化时前两帧之间的匹配
-std::vector&lt;cv::Point2f&gt; mvbPrevMatched;
-std::vector&lt;cv::Point3f&gt; mvIniP3D;
-Frame mInitialFrame;</dd>
-</dl>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">std</span><span class="p">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="nb">int</span><span class="o">&gt;</span> <span class="n">mvIniLastMatches</span><span class="p">;</span>
+<span class="n">std</span><span class="p">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="nb">int</span><span class="o">&gt;</span> <span class="n">mvIniMatches</span><span class="p">;</span><span class="o">//</span> <span class="n">跟踪初始化时前两帧之间的匹配</span>
+<span class="n">std</span><span class="p">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">cv</span><span class="p">::</span><span class="n">Point2f</span><span class="o">&gt;</span> <span class="n">mvbPrevMatched</span><span class="p">;</span>
+<span class="n">std</span><span class="p">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">cv</span><span class="p">::</span><span class="n">Point3f</span><span class="o">&gt;</span> <span class="n">mvIniP3D</span><span class="p">;</span>
+<span class="n">Frame</span> <span class="n">mInitialFrame</span><span class="p">;</span>
+</pre></div>
+</div>
 <p>Lists used to recover the full camera trajectory at the end of the execution.
 Basically we store the reference keyframe for each frame and its relative transformation</p>
-<dl class="docutils">
-<dt>::</dt>
-<dd>list&lt;cv::Mat&gt; mlRelativeFramePoses;
-list&lt;KeyFrame*&gt; mlpReferences;
-list&lt;double&gt; mlFrameTimes;
-list&lt;bool&gt; mlbLost;</dd>
-</dl>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="nb">list</span><span class="o">&lt;</span><span class="n">cv</span><span class="p">::</span><span class="n">Mat</span><span class="o">&gt;</span> <span class="n">mlRelativeFramePoses</span><span class="p">;</span>
+<span class="nb">list</span><span class="o">&lt;</span><span class="n">KeyFrame</span><span class="o">*&gt;</span> <span class="n">mlpReferences</span><span class="p">;</span>
+<span class="nb">list</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span> <span class="n">mlFrameTimes</span><span class="p">;</span>
+<span class="nb">list</span><span class="o">&lt;</span><span class="nb">bool</span><span class="o">&gt;</span> <span class="n">mlbLost</span><span class="p">;</span>
+</pre></div>
+</div>
 <div class="section" id="id1">
 <h2>其他函数<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-default"><div class="highlight"><pre><span></span>// Main tracking function. It is independent of the input sensor.

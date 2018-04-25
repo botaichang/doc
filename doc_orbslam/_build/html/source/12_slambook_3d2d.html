@@ -1,0 +1,475 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>PoseEstimate slambook_3d2d &mdash; vision 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="vision 1.0 documentation" href="../index.html"/>
+        <link rel="next" title="PoseEstimation 3d3d" href="13_slambook_3d3d.html"/>
+        <link rel="prev" title="PoseEstimate 2d-2d" href="14_slambook_2d2d.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> vision
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="1initializer.html">1.初始化Initializer.h</a></li>
+<li class="toctree-l1"><a class="reference internal" href="2_frame.html">2.Frame帧类</a></li>
+<li class="toctree-l1"><a class="reference internal" href="3_keyframe.html">3.keyframe 关键帧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="4_keyframedatabase.html">4.KeyframeDatabase</a></li>
+<li class="toctree-l1"><a class="reference internal" href="5_mappoint.html">5.MapPoint 路标点,地图点</a></li>
+<li class="toctree-l1"><a class="reference internal" href="6_map.html">6.Map地图</a></li>
+<li class="toctree-l1"><a class="reference internal" href="7_orbextractor.html">7.ORBExtractor  ORB特征提取</a></li>
+<li class="toctree-l1"><a class="reference internal" href="8_orbmatcher.html">8.ORBmatcher ORB 特征匹配</a></li>
+<li class="toctree-l1"><a class="reference internal" href="9_framedrawer.html">9.FrameDrawer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="10_tracking.html">10. Tracking 跟踪</a></li>
+<li class="toctree-l1"><a class="reference internal" href="11_PnPsolver.html">11.PnPsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="14_slambook_2d2d.html">PoseEstimate 2d-2d</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">PoseEstimate slambook_3d2d</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">先看出程序代码:</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#find-feature-matches">find_feature_matches 如何进行特征匹配</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pixel2camera">pixel2camera</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#bundleadjustment">bundleAdjustment</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="13_slambook_3d3d.html">PoseEstimation 3d3d</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">vision</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>PoseEstimate slambook_3d2d</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/source/12_slambook_3d2d.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="poseestimate-slambook-3d2d">
+<h1>PoseEstimate slambook_3d2d<a class="headerlink" href="#poseestimate-slambook-3d2d" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2>先看出程序代码:<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic">
+<li><p class="first">读取两幅图像　imread</p>
+</li>
+<li><p class="first">find_feature_matches 找出匹配的特征点   keypoints, match
+看能找到多少对匹配的特征点</p>
+</li>
+<li><p class="first">建立3D点． 并利用solvePnP计算R,T
+从深度图像1中读取第一图像对应的深度图像．</p>
+<p>获得匹配点像素坐标对应的深度信息d</p>
+<p>pt1_camera -&gt; pix2camera(keypoints_1,相机内参)</p>
+<p>pt1_3d = (pt1_camera.x * d, pt1_camera.y*d , d)
+pt2_2d = keypoints_2</p>
+<p>如此获得了pt1的3d坐标和对应的pt2的像素坐标</p>
+<p>即获得了keypoints_1对应的3d坐标和keypoints_2的像素坐标</p>
+<p>将这两个坐标放入solvePnP函数中求解R,T</p>
+<p>solvePnP ( pts_3d, pts_2d, K, Mat(), r, t, false ); // 调用OpenCV 的 PnP 求解，可选择EPNP，DLS等方法</p>
+</li>
+</ol>
+<blockquote>
+<div><p>获得r,t,并利用Rodrigues公式将r转化为矩阵形式R</p>
+<blockquote>
+<div><p>cv::Rodrigues ( r, R ); // r为旋转向量形式，用Rodrigues公式转换为矩阵</p>
+<p>如此获得R,T</p>
+</div></blockquote>
+</div></blockquote>
+<p>4．bundleAdjustment 如何进行bundleAdjustment</p>
+<p>主程序</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>int main ( int argc, char** argv )
+{
+    if ( argc != 5 )
+    {
+        cout&lt;&lt;&quot;usage: pose_estimation_3d2d img1 img2 depth1 depth2&quot;&lt;&lt;endl;
+        return 1;
+    }
+    //-- 读取图像
+    Mat img_1 = imread ( argv[1], CV_LOAD_IMAGE_COLOR );
+    Mat img_2 = imread ( argv[2], CV_LOAD_IMAGE_COLOR );
+
+    vector&lt;KeyPoint&gt; keypoints_1, keypoints_2;
+    vector&lt;DMatch&gt; matches;
+    find_feature_matches ( img_1, img_2, keypoints_1, keypoints_2, matches );
+    cout&lt;&lt;&quot;一共找到了&quot;&lt;&lt;matches.size() &lt;&lt;&quot;组匹配点&quot;&lt;&lt;endl;
+
+    // 建立3D点
+    Mat d1 = imread ( argv[3], CV_LOAD_IMAGE_UNCHANGED );       // 深度图为16位无符号数，单通道图像
+    Mat K = ( Mat_&lt;double&gt; ( 3,3 ) &lt;&lt; 520.9, 0, 325.1, 0, 521.0, 249.7, 0, 0, 1 );
+    vector&lt;Point3f&gt; pts_3d;
+    vector&lt;Point2f&gt; pts_2d;
+    for ( DMatch m:matches )
+    {
+        ushort d = d1.ptr&lt;unsigned short&gt; (int ( keypoints_1[m.queryIdx].pt.y )) [ int ( keypoints_1[m.queryIdx].pt.x ) ];
+        if ( d == 0 )   // bad depth
+            continue;
+        float dd = d/5000.0;
+        Point2d p1 = pixel2cam ( keypoints_1[m.queryIdx].pt, K );
+        pts_3d.push_back ( Point3f ( p1.x*dd, p1.y*dd, dd ) );
+        pts_2d.push_back ( keypoints_2[m.trainIdx].pt );
+    }
+
+    cout&lt;&lt;&quot;3d-2d pairs: &quot;&lt;&lt;pts_3d.size() &lt;&lt;endl;
+
+    Mat r, t;
+    solvePnP ( pts_3d, pts_2d, K, Mat(), r, t, false ); // 调用OpenCV 的 PnP 求解，可选择EPNP，DLS等方法
+    Mat R;
+    cv::Rodrigues ( r, R ); // r为旋转向量形式，用Rodrigues公式转换为矩阵
+
+    cout&lt;&lt;&quot;R=&quot;&lt;&lt;endl&lt;&lt;R&lt;&lt;endl;
+    cout&lt;&lt;&quot;t=&quot;&lt;&lt;endl&lt;&lt;t&lt;&lt;endl;
+
+    cout&lt;&lt;&quot;calling bundle adjustment&quot;&lt;&lt;endl;
+
+    bundleAdjustment ( pts_3d, pts_2d, K, R, t );
+}
+</pre></div>
+</div>
+</div>
+<div class="section" id="find-feature-matches">
+<h2>find_feature_matches 如何进行特征匹配<a class="headerlink" href="#find-feature-matches" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default"><div class="highlight"><pre><span></span>void find_feature_matches ( const Mat&amp; img_1, const Mat&amp; img_2,
+                            std::vector&lt;KeyPoint&gt;&amp; keypoints_1,
+                            std::vector&lt;KeyPoint&gt;&amp; keypoints_2,
+                            std::vector&lt; DMatch &gt;&amp; matches )
+{
+    //-- 初始化
+    Mat descriptors_1, descriptors_2;
+    // used in OpenCV3
+    Ptr&lt;FeatureDetector&gt; detector = ORB::create();
+    Ptr&lt;DescriptorExtractor&gt; descriptor = ORB::create();
+    // use this if you are in OpenCV2
+    // Ptr&lt;FeatureDetector&gt; detector = FeatureDetector::create ( &quot;ORB&quot; );
+    // Ptr&lt;DescriptorExtractor&gt; descriptor = DescriptorExtractor::create ( &quot;ORB&quot; );
+    Ptr&lt;DescriptorMatcher&gt; matcher  = DescriptorMatcher::create ( &quot;BruteForce-Hamming&quot; );
+    //-- 第一步:检测 Oriented FAST 角点位置
+    detector-&gt;detect ( img_1,keypoints_1 );
+    detector-&gt;detect ( img_2,keypoints_2 );
+
+    //-- 第二步:根据角点位置计算 BRIEF 描述子
+    descriptor-&gt;compute ( img_1, keypoints_1, descriptors_1 );
+    descriptor-&gt;compute ( img_2, keypoints_2, descriptors_2 );
+
+    //-- 第三步:对两幅图像中的BRIEF描述子进行匹配，使用 Hamming 距离
+    vector&lt;DMatch&gt; match;
+    // BFMatcher matcher ( NORM_HAMMING );
+    matcher-&gt;match ( descriptors_1, descriptors_2, match );
+
+    //-- 第四步:匹配点对筛选
+    double min_dist=10000, max_dist=0;
+
+    //找出所有匹配之间的最小距离和最大距离, 即是最相似的和最不相似的两组点之间的距离
+    for ( int i = 0; i &lt; descriptors_1.rows; i++ )
+    {
+        double dist = match[i].distance;
+        if ( dist &lt; min_dist ) min_dist = dist;
+        if ( dist &gt; max_dist ) max_dist = dist;
+    }
+
+    printf ( &quot;-- Max dist : %f \n&quot;, max_dist );
+    printf ( &quot;-- Min dist : %f \n&quot;, min_dist );
+
+    //当描述子之间的距离大于两倍的最小距离时,即认为匹配有误.但有时候最小距离会非常小,设置一个经验值30作为下限.
+    for ( int i = 0; i &lt; descriptors_1.rows; i++ )
+    {
+        if ( match[i].distance &lt;= max ( 2*min_dist, 30.0 ) )
+        {
+            matches.push_back ( match[i] );
+        }
+    }
+}
+</pre></div>
+</div>
+</div>
+<div class="section" id="pixel2camera">
+<h2>pixel2camera<a class="headerlink" href="#pixel2camera" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Point2d</span> <span class="n">pixel2cam</span> <span class="p">(</span> <span class="n">const</span> <span class="n">Point2d</span><span class="o">&amp;</span> <span class="n">p</span><span class="p">,</span> <span class="n">const</span> <span class="n">Mat</span><span class="o">&amp;</span> <span class="n">K</span> <span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">Point2d</span>
+           <span class="p">(</span>
+               <span class="p">(</span> <span class="n">p</span><span class="o">.</span><span class="n">x</span> <span class="o">-</span> <span class="n">K</span><span class="o">.</span><span class="n">at</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span> <span class="p">(</span> <span class="mi">0</span><span class="p">,</span><span class="mi">2</span> <span class="p">)</span> <span class="p">)</span> <span class="o">/</span> <span class="n">K</span><span class="o">.</span><span class="n">at</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span> <span class="p">(</span> <span class="mi">0</span><span class="p">,</span><span class="mi">0</span> <span class="p">),</span>
+               <span class="p">(</span> <span class="n">p</span><span class="o">.</span><span class="n">y</span> <span class="o">-</span> <span class="n">K</span><span class="o">.</span><span class="n">at</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span> <span class="p">(</span> <span class="mi">1</span><span class="p">,</span><span class="mi">2</span> <span class="p">)</span> <span class="p">)</span> <span class="o">/</span> <span class="n">K</span><span class="o">.</span><span class="n">at</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span> <span class="p">(</span> <span class="mi">1</span><span class="p">,</span><span class="mi">1</span> <span class="p">)</span>
+           <span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="bundleadjustment">
+<h2>bundleAdjustment<a class="headerlink" href="#bundleadjustment" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">void</span> <span class="n">bundleAdjustment</span> <span class="p">(</span>
+    <span class="n">const</span> <span class="n">vector</span><span class="o">&lt;</span> <span class="n">Point3f</span> <span class="o">&gt;</span> <span class="n">points_3d</span><span class="p">,</span>
+    <span class="n">const</span> <span class="n">vector</span><span class="o">&lt;</span> <span class="n">Point2f</span> <span class="o">&gt;</span> <span class="n">points_2d</span><span class="p">,</span>
+    <span class="n">const</span> <span class="n">Mat</span><span class="o">&amp;</span> <span class="n">K</span><span class="p">,</span>
+    <span class="n">Mat</span><span class="o">&amp;</span> <span class="n">R</span><span class="p">,</span> <span class="n">Mat</span><span class="o">&amp;</span> <span class="n">t</span> <span class="p">)</span>
+<span class="p">{</span>
+    <span class="o">//</span> <span class="n">初始化g2o</span>
+    <span class="n">typedef</span> <span class="n">g2o</span><span class="p">::</span><span class="n">BlockSolver</span><span class="o">&lt;</span> <span class="n">g2o</span><span class="p">::</span><span class="n">BlockSolverTraits</span><span class="o">&lt;</span><span class="mi">6</span><span class="p">,</span><span class="mi">3</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="n">Block</span><span class="p">;</span>  <span class="o">//</span> <span class="n">pose</span> <span class="n">维度为</span> <span class="mi">6</span><span class="p">,</span> <span class="n">landmark</span> <span class="n">维度为</span> <span class="mi">3</span>
+    <span class="n">Block</span><span class="p">::</span><span class="n">LinearSolverType</span><span class="o">*</span> <span class="n">linearSolver</span> <span class="o">=</span> <span class="n">new</span> <span class="n">g2o</span><span class="p">::</span><span class="n">LinearSolverCSparse</span><span class="o">&lt;</span><span class="n">Block</span><span class="p">::</span><span class="n">PoseMatrixType</span><span class="o">&gt;</span><span class="p">();</span> <span class="o">//</span> <span class="n">线性方程求解器</span>
+    <span class="n">Block</span><span class="o">*</span> <span class="n">solver_ptr</span> <span class="o">=</span> <span class="n">new</span> <span class="n">Block</span> <span class="p">(</span> <span class="n">linearSolver</span> <span class="p">);</span>     <span class="o">//</span> <span class="n">矩阵块求解器</span>
+    <span class="n">g2o</span><span class="p">::</span><span class="n">OptimizationAlgorithmLevenberg</span><span class="o">*</span> <span class="n">solver</span> <span class="o">=</span> <span class="n">new</span> <span class="n">g2o</span><span class="p">::</span><span class="n">OptimizationAlgorithmLevenberg</span> <span class="p">(</span> <span class="n">solver_ptr</span> <span class="p">);</span>
+    <span class="n">g2o</span><span class="p">::</span><span class="n">SparseOptimizer</span> <span class="n">optimizer</span><span class="p">;</span>
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">setAlgorithm</span> <span class="p">(</span> <span class="n">solver</span> <span class="p">);</span>
+
+    <span class="o">//</span> <span class="n">vertex</span>
+    <span class="n">g2o</span><span class="p">::</span><span class="n">VertexSE3Expmap</span><span class="o">*</span> <span class="n">pose</span> <span class="o">=</span> <span class="n">new</span> <span class="n">g2o</span><span class="p">::</span><span class="n">VertexSE3Expmap</span><span class="p">();</span> <span class="o">//</span> <span class="n">camera</span> <span class="n">pose</span>
+    <span class="n">Eigen</span><span class="p">::</span><span class="n">Matrix3d</span> <span class="n">R_mat</span><span class="p">;</span>
+    <span class="n">R_mat</span> <span class="o">&lt;&lt;</span>
+          <span class="n">R</span><span class="o">.</span><span class="n">at</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span> <span class="p">(</span> <span class="mi">0</span><span class="p">,</span><span class="mi">0</span> <span class="p">),</span> <span class="n">R</span><span class="o">.</span><span class="n">at</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span> <span class="p">(</span> <span class="mi">0</span><span class="p">,</span><span class="mi">1</span> <span class="p">),</span> <span class="n">R</span><span class="o">.</span><span class="n">at</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span> <span class="p">(</span> <span class="mi">0</span><span class="p">,</span><span class="mi">2</span> <span class="p">),</span>
+               <span class="n">R</span><span class="o">.</span><span class="n">at</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span> <span class="p">(</span> <span class="mi">1</span><span class="p">,</span><span class="mi">0</span> <span class="p">),</span> <span class="n">R</span><span class="o">.</span><span class="n">at</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span> <span class="p">(</span> <span class="mi">1</span><span class="p">,</span><span class="mi">1</span> <span class="p">),</span> <span class="n">R</span><span class="o">.</span><span class="n">at</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span> <span class="p">(</span> <span class="mi">1</span><span class="p">,</span><span class="mi">2</span> <span class="p">),</span>
+               <span class="n">R</span><span class="o">.</span><span class="n">at</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span> <span class="p">(</span> <span class="mi">2</span><span class="p">,</span><span class="mi">0</span> <span class="p">),</span> <span class="n">R</span><span class="o">.</span><span class="n">at</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span> <span class="p">(</span> <span class="mi">2</span><span class="p">,</span><span class="mi">1</span> <span class="p">),</span> <span class="n">R</span><span class="o">.</span><span class="n">at</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span> <span class="p">(</span> <span class="mi">2</span><span class="p">,</span><span class="mi">2</span> <span class="p">);</span>
+    <span class="n">pose</span><span class="o">-&gt;</span><span class="n">setId</span> <span class="p">(</span> <span class="mi">0</span> <span class="p">);</span>
+    <span class="n">pose</span><span class="o">-&gt;</span><span class="n">setEstimate</span> <span class="p">(</span> <span class="n">g2o</span><span class="p">::</span><span class="n">SE3Quat</span> <span class="p">(</span>
+                            <span class="n">R_mat</span><span class="p">,</span>
+                            <span class="n">Eigen</span><span class="p">::</span><span class="n">Vector3d</span> <span class="p">(</span> <span class="n">t</span><span class="o">.</span><span class="n">at</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span> <span class="p">(</span> <span class="mi">0</span><span class="p">,</span><span class="mi">0</span> <span class="p">),</span> <span class="n">t</span><span class="o">.</span><span class="n">at</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span> <span class="p">(</span> <span class="mi">1</span><span class="p">,</span><span class="mi">0</span> <span class="p">),</span> <span class="n">t</span><span class="o">.</span><span class="n">at</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span> <span class="p">(</span> <span class="mi">2</span><span class="p">,</span><span class="mi">0</span> <span class="p">)</span> <span class="p">)</span>
+                        <span class="p">)</span> <span class="p">);</span>
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">addVertex</span> <span class="p">(</span> <span class="n">pose</span> <span class="p">);</span>
+
+    <span class="nb">int</span> <span class="n">index</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span> <span class="n">const</span> <span class="n">Point3f</span> <span class="n">p</span><span class="p">:</span><span class="n">points_3d</span> <span class="p">)</span>   <span class="o">//</span> <span class="n">landmarks</span>
+    <span class="p">{</span>
+        <span class="n">g2o</span><span class="p">::</span><span class="n">VertexSBAPointXYZ</span><span class="o">*</span> <span class="n">point</span> <span class="o">=</span> <span class="n">new</span> <span class="n">g2o</span><span class="p">::</span><span class="n">VertexSBAPointXYZ</span><span class="p">();</span>
+        <span class="n">point</span><span class="o">-&gt;</span><span class="n">setId</span> <span class="p">(</span> <span class="n">index</span><span class="o">++</span> <span class="p">);</span>
+        <span class="n">point</span><span class="o">-&gt;</span><span class="n">setEstimate</span> <span class="p">(</span> <span class="n">Eigen</span><span class="p">::</span><span class="n">Vector3d</span> <span class="p">(</span> <span class="n">p</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">z</span> <span class="p">)</span> <span class="p">);</span>
+        <span class="n">point</span><span class="o">-&gt;</span><span class="n">setMarginalized</span> <span class="p">(</span> <span class="n">true</span> <span class="p">);</span> <span class="o">//</span> <span class="n">g2o</span> <span class="n">中必须设置</span> <span class="n">marg</span> <span class="n">参见第十讲内容</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">addVertex</span> <span class="p">(</span> <span class="n">point</span> <span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="o">//</span> <span class="n">parameter</span><span class="p">:</span> <span class="n">camera</span> <span class="n">intrinsics</span>
+    <span class="n">g2o</span><span class="p">::</span><span class="n">CameraParameters</span><span class="o">*</span> <span class="n">camera</span> <span class="o">=</span> <span class="n">new</span> <span class="n">g2o</span><span class="p">::</span><span class="n">CameraParameters</span> <span class="p">(</span>
+        <span class="n">K</span><span class="o">.</span><span class="n">at</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span> <span class="p">(</span> <span class="mi">0</span><span class="p">,</span><span class="mi">0</span> <span class="p">),</span> <span class="n">Eigen</span><span class="p">::</span><span class="n">Vector2d</span> <span class="p">(</span> <span class="n">K</span><span class="o">.</span><span class="n">at</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span> <span class="p">(</span> <span class="mi">0</span><span class="p">,</span><span class="mi">2</span> <span class="p">),</span> <span class="n">K</span><span class="o">.</span><span class="n">at</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span> <span class="p">(</span> <span class="mi">1</span><span class="p">,</span><span class="mi">2</span> <span class="p">)</span> <span class="p">),</span> <span class="mi">0</span>
+    <span class="p">);</span>
+    <span class="n">camera</span><span class="o">-&gt;</span><span class="n">setId</span> <span class="p">(</span> <span class="mi">0</span> <span class="p">);</span>
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">addParameter</span> <span class="p">(</span> <span class="n">camera</span> <span class="p">);</span>
+
+    <span class="o">//</span> <span class="n">edges</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span> <span class="n">const</span> <span class="n">Point2f</span> <span class="n">p</span><span class="p">:</span><span class="n">points_2d</span> <span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">g2o</span><span class="p">::</span><span class="n">EdgeProjectXYZ2UV</span><span class="o">*</span> <span class="n">edge</span> <span class="o">=</span> <span class="n">new</span> <span class="n">g2o</span><span class="p">::</span><span class="n">EdgeProjectXYZ2UV</span><span class="p">();</span>
+        <span class="n">edge</span><span class="o">-&gt;</span><span class="n">setId</span> <span class="p">(</span> <span class="n">index</span> <span class="p">);</span>
+        <span class="n">edge</span><span class="o">-&gt;</span><span class="n">setVertex</span> <span class="p">(</span> <span class="mi">0</span><span class="p">,</span> <span class="n">dynamic_cast</span><span class="o">&lt;</span><span class="n">g2o</span><span class="p">::</span><span class="n">VertexSBAPointXYZ</span><span class="o">*&gt;</span> <span class="p">(</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">vertex</span> <span class="p">(</span> <span class="n">index</span> <span class="p">)</span> <span class="p">)</span> <span class="p">);</span>
+        <span class="n">edge</span><span class="o">-&gt;</span><span class="n">setVertex</span> <span class="p">(</span> <span class="mi">1</span><span class="p">,</span> <span class="n">pose</span> <span class="p">);</span>
+        <span class="n">edge</span><span class="o">-&gt;</span><span class="n">setMeasurement</span> <span class="p">(</span> <span class="n">Eigen</span><span class="p">::</span><span class="n">Vector2d</span> <span class="p">(</span> <span class="n">p</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">y</span> <span class="p">)</span> <span class="p">);</span>
+        <span class="n">edge</span><span class="o">-&gt;</span><span class="n">setParameterId</span> <span class="p">(</span> <span class="mi">0</span><span class="p">,</span><span class="mi">0</span> <span class="p">);</span>
+        <span class="n">edge</span><span class="o">-&gt;</span><span class="n">setInformation</span> <span class="p">(</span> <span class="n">Eigen</span><span class="p">::</span><span class="n">Matrix2d</span><span class="p">::</span><span class="n">Identity</span><span class="p">()</span> <span class="p">);</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">addEdge</span> <span class="p">(</span> <span class="n">edge</span> <span class="p">);</span>
+        <span class="n">index</span><span class="o">++</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">chrono</span><span class="p">::</span><span class="n">steady_clock</span><span class="p">::</span><span class="n">time_point</span> <span class="n">t1</span> <span class="o">=</span> <span class="n">chrono</span><span class="p">::</span><span class="n">steady_clock</span><span class="p">::</span><span class="n">now</span><span class="p">();</span>
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">setVerbose</span> <span class="p">(</span> <span class="n">true</span> <span class="p">);</span>
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">initializeOptimization</span><span class="p">();</span>
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">optimize</span> <span class="p">(</span> <span class="mi">100</span> <span class="p">);</span>
+    <span class="n">chrono</span><span class="p">::</span><span class="n">steady_clock</span><span class="p">::</span><span class="n">time_point</span> <span class="n">t2</span> <span class="o">=</span> <span class="n">chrono</span><span class="p">::</span><span class="n">steady_clock</span><span class="p">::</span><span class="n">now</span><span class="p">();</span>
+    <span class="n">chrono</span><span class="p">::</span><span class="n">duration</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span> <span class="n">time_used</span> <span class="o">=</span> <span class="n">chrono</span><span class="p">::</span><span class="n">duration_cast</span><span class="o">&lt;</span><span class="n">chrono</span><span class="p">::</span><span class="n">duration</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;&gt;</span> <span class="p">(</span> <span class="n">t2</span><span class="o">-</span><span class="n">t1</span> <span class="p">);</span>
+    <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s2">&quot;optimization costs time: &quot;</span><span class="o">&lt;&lt;</span><span class="n">time_used</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">&lt;&lt;</span><span class="s2">&quot; seconds.&quot;</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;</span>
+
+    <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="o">&lt;&lt;</span><span class="s2">&quot;after optimization:&quot;</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;</span>
+    <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s2">&quot;T=&quot;</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="o">&lt;&lt;</span><span class="n">Eigen</span><span class="p">::</span><span class="n">Isometry3d</span> <span class="p">(</span> <span class="n">pose</span><span class="o">-&gt;</span><span class="n">estimate</span><span class="p">()</span> <span class="p">)</span><span class="o">.</span><span class="n">matrix</span><span class="p">()</span> <span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="13_slambook_3d3d.html" class="btn btn-neutral float-right" title="PoseEstimation 3d3d" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="14_slambook_2d2d.html" class="btn btn-neutral" title="PoseEstimate 2d-2d" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, lijun.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
